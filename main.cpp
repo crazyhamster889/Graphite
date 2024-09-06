@@ -1,4 +1,4 @@
-
+﻿
 #include <cmath>
 #include <execution>
 #include <algorithm>
@@ -11,7 +11,7 @@
 #include <thread>
 #include <Windows.h>
 #include "CMathParser.h"
-#include "poolstl.hpp"
+
 using namespace std;
 
 const float ScreenWidth = 1500;
@@ -514,12 +514,17 @@ void updateTextSize(tgui::BackendGui& gui)
 	gui.setTextSize(0.02f * windowHeight); // 7% of height
 }
 
-void ToggleGrid() 
+
+tgui::ColorPicker::Ptr colourPicker = nullptr;
+
+void ToggleGrid()
 {
 	visibleGrid = !visibleGrid;
 }
-
-tgui::ColorPicker::Ptr colourPicker;
+void ToggleClourPicker(tgui::BackendGui& gui)
+{
+	gui.add(colourPicker);
+}
 
 void loadWidgets(tgui::BackendGui& gui)
 {
@@ -530,7 +535,7 @@ void loadWidgets(tgui::BackendGui& gui)
 	blackTheme->setDefault("TGUI-1.5/themes/Black.txt");
 
 		
-	auto picture = tgui::Picture::create("Logo.png");
+	auto picture = tgui::Picture::create("Sprites/Logo.png");
 	picture->setSize({ "10%", "15%" });
 	picture->setInheritedOpacity(1);
 	gui.add(picture);
@@ -549,10 +554,17 @@ void loadWidgets(tgui::BackendGui& gui)
 	gui.add(editBoxResolution);
 	
     colourPicker = tgui::ColorPicker::create();
-	colourPicker->setSize({ "40%", "40%" }); 
-	colourPicker->setPosition({ "25%", "20%" });
+	colourPicker->setSize({ "40%", "30%" }); 
+	colourPicker->setPosition({ "26%", "20%" });
+	colourPicker->setPositionLocked(true);
 	gui.add(colourPicker);
+	colourPicker->close();
     baseColour = colourPicker->getColor();
+
+	auto colourPickerButton = tgui::Button::create("ƒ");
+	colourPickerButton->setSize({ "3%", "5%" });
+	colourPickerButton->setPosition({ "22%", "20%" });
+	gui.add(colourPickerButton);
 
 	auto checkBox = tgui::CheckBox::create("Grid");
 	checkBox->setSize({ "2%", "3%" });
@@ -567,6 +579,9 @@ void loadWidgets(tgui::BackendGui& gui)
 
 	gui.add(button);
 	checkBox->onClick(ToggleGrid);
+	colourPickerButton->onClick([&gui]() {
+		ToggleClourPicker(gui);
+		});	
 	button->onPress(&OnUserCreate, editBoxEquation, editBoxResolution);
 }
 
