@@ -10,7 +10,10 @@
 #include <iostream>
 #include <thread>
 #include <Windows.h>
+
 #include "CMathParser.h"
+#include "Database.h"
+
 
 using namespace std;
 
@@ -21,6 +24,8 @@ sf::VertexArray graph(sf::Triangles);
 
 bool visibleGrid = false;
 tgui::Color baseColour;
+
+DatabaseClass database;
 
 class MathsHelpers
 {
@@ -314,10 +319,6 @@ class Renderer {
 				triTranslated.p[1].z = triRotatedZ.p[1].z + 30.0f;
 				triTranslated.p[2].z = triRotatedZ.p[2].z + 30.0f;
 
-				triTranslated.p[0].y = triRotatedZ.p[0].y - 2.0f;
-				triTranslated.p[1].y = triRotatedZ.p[1].y - 2.0f;
-				triTranslated.p[2].y = triRotatedZ.p[2].y - 2.0f;
-
 				MathsHelpers::vec3d normal, line1, line2;
 				line1.x = tri.p[1].x - tri.p[0].x;
 				line1.y = tri.p[1].y - tri.p[0].y;
@@ -458,6 +459,9 @@ class Renderer {
 class BuildGraph
 {
 public:
+
+	float gridSize = 6;
+
 	void CreateQuad(MathsHelpers::vec3d point1, MathsHelpers::vec3d point2, MathsHelpers::vec3d point3, MathsHelpers::vec3d point4, int ID, sf::Color Color)
 	{
 		meshes[ID].tris.push_back({ point2,    point3,    point1, 0, false, Color });
@@ -471,17 +475,15 @@ public:
 
 	void GridBuilder()
 	{
-		float gridSize = 10;
-
 		sf::Color GridColour = { 150,150,150,60 };
 
-		for (float j = -gridSize; j <= gridSize; j += 1)
+		for (float j = -gridSize; j <= gridSize; j += 0.7)
 		{
 			if (j == 0)
 				continue;
 			CreateGridLine({ -gridSize, 1, j }, { gridSize, 1, j }, GridColour);
 		}
-		for (float k = -gridSize; k <= gridSize; k += 1)
+		for (float k = -gridSize; k <= gridSize; k += 0.7)
 		{
 			if (k == 0)
 				continue;
@@ -502,7 +504,7 @@ public:
 		CreateGridLine({ -gridSize, -gridSize, -gridSize }, { -gridSize, -gridSize, gridSize }, GridColour);
 	}
 
-	void OnUserCreate(tgui::EditBox::Ptr equationInput, tgui::EditBox::Ptr resolutionInput)
+	void OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutionInput)
 	{
 		for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
 		{
@@ -511,16 +513,17 @@ public:
 
 		float size = resolutionInput->getText().toFloat();
 
-		string equation = (string)equationInput->getText();
+		string equation = equationInput;
+		database.InsertIntoDatabase(*equation.data(), *equation.data());
 		parser ob;
 		Algorithms algorithms;
 		ob.eval_exp("z = " + to_string(size));
 
-		for (float x = -6.0f; x <= 6.0f; x += size)
+		for (float x = -gridSize; x <= gridSize; x += size)
 		{
 			ob.eval_exp("x = " + to_string(x));
 
-			for (float y = -6.0f; y <= 6.0f; y += size)
+			for (float y = -gridSize; y <= gridSize; y += size)
 			{
 				ob.eval_exp("y = " + to_string(y));
 
@@ -532,11 +535,11 @@ public:
 				float zYOld = -ob.eval_exp(algorithms.replaceAll(equation, "y", "(Y-Z)"));
 				float z = -ob.eval_exp(equation);
 
-				if ((z < 7 && z > -7) || (zXYOld < 7 && zXYOld > -7) || (zYOld < 7 && zYOld > -7) || (zXOld < 7 && zXOld > -7)) {
-					zXOld = std::fmax(-6, std::fmin(zXOld, 6));
-					zXYOld = std::fmax(-6, std::fmin(zXYOld, 6));
-					zYOld = std::fmax(-6, std::fmin(zYOld, 6));
-					z = std::fmax(-6, std::fmin(z, 6));
+				if ((z < gridSize && z > -gridSize) || (zXYOld < gridSize && zXYOld > -gridSize) || (zYOld < gridSize && zYOld > -gridSize) || (zXOld < gridSize && zXOld > -gridSize)) {
+					zXOld = std::fmax(-gridSize, std::fmin(zXOld, gridSize));
+					zXYOld = std::fmax(-gridSize, std::fmin(zXYOld, gridSize));
+					zYOld = std::fmax(-gridSize, std::fmin(zYOld, gridSize));
+					z = std::fmax(-gridSize, std::fmin(z, gridSize));
 					CreateQuad({ x + -size / 2.0f, zXYOld, y - size / 2.0f }, { x + size / 2.0f, zYOld, y - size / 2.0f }, { x + -size / 2.0f, zXOld, y + size / 2.0f }, { x + size / 2.0f, z, y + size / 2.0f }, 0, baseColour);
 				}
 			}
@@ -579,9 +582,21 @@ void ToggleClourPicker(tgui::BackendGui& gui)
 	gui.add(colourPicker);
 }
 
-void TempFunction(tgui::EditBox::Ptr equationInput, tgui::EditBox::Ptr resolutionInput) {
+void TempFunction(tgui::EditBox::Ptr equationInput, tgui::EditBox::Ptr resolutionInput, tgui::Slider::Ptr sliderInput) {
 	BuildGraph graph;
-	graph.OnUserCreate(equationInput, resolutionInput);
+	graph.gridSize = sliderInput->getValue();
+
+	string equationContents = (string)equationInput->getText();
+	//cout << equationContents.empty();
+	if (equationContents.empty() != 1)
+	{
+		graph.OnUserCreate(equationContents, resolutionInput);
+	}
+	else 
+	{
+		graph.OnUserCreate(database.LastEquation(), resolutionInput);
+	}
+
 }
 
 void loadWidgets(tgui::BackendGui& gui)
@@ -610,6 +625,11 @@ void loadWidgets(tgui::BackendGui& gui)
 	editBoxResolution->setPosition({ "2%", "30%" });
 	editBoxResolution->setDefaultText("Resolution");
 	gui.add(editBoxResolution);
+
+	auto slider = tgui::Slider::create();
+	slider->setSize({ "20%", "3%" });
+	slider->setPosition({ "2.5%", "60%" });
+	gui.add(slider);
 	
     colourPicker = tgui::ColorPicker::create();
 	colourPicker->setSize({ "40%", "30%" }); 
@@ -640,7 +660,7 @@ void loadWidgets(tgui::BackendGui& gui)
 	colourPickerButton->onClick([&gui]() {
 		ToggleClourPicker(gui);
 		});	
-	button->onPress(&TempFunction, editBoxEquation, editBoxResolution);
+	button->onPress(&TempFunction, editBoxEquation, editBoxResolution, slider);
 }
 
 bool run(tgui::BackendGui& gui)
@@ -669,10 +689,12 @@ int main()
 	run(gui);
 
 	Renderer renderer (window);
+	database.SetupDatabase();
 
 
 	while (window.isOpen())
 	{
+
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
