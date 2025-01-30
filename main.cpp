@@ -24,8 +24,8 @@ const float ScreenHeight = 1000;
 sf::ContextSettings settings;
 sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "I LOVE BIRDS", sf::Style::Resize, settings);
 DatabaseClass database;
-Renderer renderer(window);
-BuildGraph graph(database,renderer);
+BuildGraph graph(database);
+Renderer renderer(window, graph);
 
 void updateTextSize(tgui::BackendGui& gui)
 {
@@ -48,7 +48,6 @@ void ToggleClourPicker(tgui::BackendGui& gui)
 void TempFunction(tgui::EditBox::Ptr equationInput, tgui::EditBox::Ptr resolutionInput, tgui::Slider::Ptr sliderInput) 
 {
 	graph.gridSize = sliderInput->getValue();
-
 	string equationContents = (string)equationInput->getText();
 	if (equationContents.empty() != 1)
 	{
@@ -58,9 +57,7 @@ void TempFunction(tgui::EditBox::Ptr equationInput, tgui::EditBox::Ptr resolutio
 	{
 		graph.OnUserCreate(database.LastEquation(), resolutionInput);
 	}
-
-	renderer.meshes[0] = graph.meshes[0];
-	renderer.meshes[1] = graph.meshes[1];
+	renderer.graphConstructor = graph;
 }
 
 void loadWidgets(tgui::BackendGui& gui)

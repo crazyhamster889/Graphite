@@ -45,7 +45,7 @@ void BuildGraph::GridBuilder()
 
 void BuildGraph::OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutionInput)
 {
-	for (int i = 0; i <= (end(renderer.meshes) - begin(renderer.meshes)) - 1; i++)
+	for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
 	{
 		meshes[i].tris.clear();
 	}
@@ -78,7 +78,7 @@ void BuildGraph::OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutio
 				zXYOld = std::fmax(-gridSize, std::fmin(zXYOld, gridSize));
 				zYOld = std::fmax(-gridSize, std::fmin(zYOld, gridSize));
 				z = std::fmax(-gridSize, std::fmin(z, gridSize));
-				CreateQuad({ x + -size / 2.0f, zXYOld, y - size / 2.0f }, { x + size / 2.0f, zYOld, y - size / 2.0f }, { x + -size / 2.0f, zXOld, y + size / 2.0f }, { x + size / 2.0f, z, y + size / 2.0f }, 0, renderer.baseColour);
+				CreateQuad({ x + -size / 2.0f, zXYOld, y - size / 2.0f }, { x + size / 2.0f, zYOld, y - size / 2.0f }, { x + -size / 2.0f, zXOld, y + size / 2.0f }, { x + size / 2.0f, z, y + size / 2.0f }, 0, sf::Color::White);
 			}
 		}
 	}

@@ -1,5 +1,9 @@
 #include "Algorithms.h"
-#include <thread>
+#include <future> 
+
+//#include <thrust/device_vector.h>
+//#include <thrust/sort.h>
+//#include <thrust/sort.h>
 
 using namespace std;
 
@@ -65,16 +69,20 @@ void Algorithms::merge(vector<Utils::triangle>& vec, int left, int mid, int righ
 		k++;
 	}
 }
-
+/*void Algorithms::gpuMergeSort(vector<Utils::triangle>& vec) {
+	thrust::device_vector<Utils::triangle> d_vec(vec.begin(), vec.end()); // Copy to GPU
+	thrust::sort(d_vec.begin(), d_vec.end(), compareTriangles); // GPU parallel sort
+	thrust::copy(d_vec.begin(), d_vec.end(), vec.begin()); // Copy back to CPU
+}*/
 // Recursive merge sort with parallelization
 void Algorithms::parallelMergeSort(vector < Utils::triangle >& vec, int left, int right, int depth) {
 	if (left < right) {
 		int mid = left + (right - left) / 2;
 
 		if (depth < log2(thread::hardware_concurrency())) {
-			thread leftThread(parallelMergeSort, ref(vec), left, mid, depth + 1);
+			auto leftFuture = async(launch::async, &Algorithms::parallelMergeSort, ref(vec), left, mid, depth + 1);
 			parallelMergeSort(vec, mid + 1, right, depth + 1);
-			leftThread.join();
+			leftFuture.get(); 
 		}
 		else {
 			parallelMergeSort(vec, left, mid, depth + 1);

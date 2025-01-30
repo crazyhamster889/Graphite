@@ -1,6 +1,7 @@
 #include "MathsUtils.h"
 #include "Algorithms.h"
 #include "Renderer.h"
+#include <map>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
@@ -18,9 +19,16 @@ void Renderer::FillTriangle(float x1, float y1, float x2, float y2, float x3, fl
 	convex.setPoint(1, sf::Vector2f(x2, y2));
 	convex.setPoint(2, sf::Vector2f(x3, y3));
 
-	window.draw(convex);
+	//window.draw(convex);
 
 	return;
+}
+
+bool Renderer::WithinScreenLimits(Utils::vec3d& triProjected)
+{
+	if (abs(triProjected.x) > ScreenWidth && abs(triProjected.y) > ScreenHeight)
+		return false;	
+	return true;
 }
 
 void Renderer::OnUserUpdate()
@@ -38,9 +46,9 @@ void Renderer::OnUserUpdate()
 	vector<Utils::triangle> vecTrianglesToRaster;
 	
 
-	for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
+	for (int i = 0; i <= (end(graphConstructor.meshes) - begin(graphConstructor.meshes)) - 1; i++)
 	{
-		for (auto tri : meshes[i].tris)
+		for (auto tri : graphConstructor.meshes[i].tris)
 		{
 			Utils::triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
 
@@ -122,39 +130,25 @@ void Renderer::OnUserUpdate()
 
 	int gridVertex = 0;
 
-	for (auto& triProjected : vecTrianglesToRaster)
+	for (Utils::triangle triProjected : vecTrianglesToRaster)
 	{
-		if (abs(triProjected.p[0].x) < ScreenWidth && abs(triProjected.p[0].y) < ScreenHeight || triProjected.grid) {
-			if (abs(triProjected.p[1].x) < ScreenWidth && abs(triProjected.p[1].y) < ScreenHeight || triProjected.grid) {
-				if (abs(triProjected.p[2].x) < ScreenWidth && abs(triProjected.p[2].y) < ScreenHeight || triProjected.grid) {
+		for (Utils::vec3d point : triProjected.p)
+		{
+			if (WithinScreenLimits(point))
+				continue;
 
-					sf::Vertex v1(sf::Vector2f(triProjected.p[0].x, triProjected.p[0].y));
-					sf::Vertex v2(sf::Vector2f(triProjected.p[1].x, triProjected.p[1].y));
-					sf::Vertex v3(sf::Vector2f(triProjected.p[2].x, triProjected.p[2].y));
-					v2.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
-					v1.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
-					v3.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
-					if (!triProjected.grid)
-					{
-						graph.append(v1);
-						graph.append(v2);
-						graph.append(v3);
-					}
-					else
-					{
-						gridVertices.push_back(v1);
-						gridVertices.push_back(v2);
+			sf::Vertex v1(sf::Vector2f(point.x, point.y));
 
-						gridVertices.push_back(v2);
-						gridVertices.push_back(v3);
-
-						gridVertices.push_back(v3);
-						gridVertices.push_back(v1);
-					}
-				}
+			v1.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
+			if (!triProjected.grid)
+			{
+				graph.append(v1);
+			}
+			else
+			{
+				gridVertices.push_back(v1);
 			}
 		}
-
 	}
 	sf::RectangleShape grid;
 
@@ -172,19 +166,5 @@ void Renderer::OnUserUpdate()
 		}
 	}
 	window.draw(graph);
-
-	if (visibleGrid) {
-		for (int i = 0; i < (end(gridVertices) - begin(gridVertices)) - 2; i += 2)
-		{
-			grid.setPosition(gridVertices[i].position);
-			float angle = atan2(gridVertices[i].position.y - gridVertices[i + 1].position.y, gridVertices[i].position.x - gridVertices[i + 1].position.x);
-			grid.setRotation(angle * 180 / 3.1459f);
-			grid.setSize(sf::Vector2f(-sqrt(powf(gridVertices[i].position.y - gridVertices[i + 1].position.y, 2) + powf(gridVertices[i].position.x - gridVertices[i + 1].position.x, 2)), 0));
-
-			grid.setOutlineColor({ gridVertices[i].color.r, gridVertices[i].color.g, gridVertices[i].color.b, 10 });
-			grid.setOutlineThickness(1);
-			window.draw(grid);
-		}
-	}
 	return;
 }

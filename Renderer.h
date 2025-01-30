@@ -1,5 +1,6 @@
 #include <vector>
 #include "MathsUtils.h"
+#include "BuildGraph.h"
 #include "CameraControls.h"
 
 
@@ -9,13 +10,14 @@ using namespace std;
 
 class Renderer
 {
+	bool WithinScreenLimits(Utils::vec3d& triProjected);
 
 public:
 
-	Renderer(sf::RenderWindow& targetWindow) : window(targetWindow) {}
+	Renderer(sf::RenderWindow& targetWindow, BuildGraph& targetGraph) : window(targetWindow), graphConstructor(targetGraph) {}
 
-	Utils::mesh meshes[2];
 	Utils::mat4x4 matProj;
+	BuildGraph graphConstructor;
 	CameraControls controls;
 	Utils maths;
 
