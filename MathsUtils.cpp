@@ -33,6 +33,21 @@ Utils::mat4x4 Utils::DefineProjectionMatrix(float ScreenHeight, float ScreenWidt
 	return temp;
 }
 
+int Utils::factorial(int input) 
+{
+	int value = 1;
+
+	if (input == 0 || input == 1)
+		return 1;
+
+	for (int i = 1; i <= input; i++)
+	{
+		value *= i;
+	}
+
+	return value;
+}
+
 
 Utils::mat4x4 Utils::MultiplyMatrix(mat4x4& i, mat4x4& o)
 {

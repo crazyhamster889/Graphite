@@ -1,9 +1,14 @@
 #include "Algorithms.h"
+<<<<<<< Updated upstream
 #include <future> 
 
 //#include <thrust/device_vector.h>
 //#include <thrust/sort.h>
 //#include <thrust/sort.h>
+=======
+#include <cmath> 
+#include <thread>
+>>>>>>> Stashed changes
 
 using namespace std;
 
@@ -26,6 +31,18 @@ string Algorithms::replaceAll(const string& str, const string& from, const strin
 		lowerResult = toLower(result);
 	}
 	return result;
+}
+
+float Algorithms::SinExpansion(double num, double precision)
+{
+	float value = 0;
+
+	num = remainder(num + 3.1415f, 2 * 3.1415f);
+
+	for (int n = 0; n < precision; n++) {
+		value += pow(-1.0, n) * pow(num, 2 * n + 1) / Utils::factorial(2 * n + 1);
+	}
+	return value;
 }
 
 

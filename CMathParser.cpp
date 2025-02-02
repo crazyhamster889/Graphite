@@ -1,5 +1,6 @@
 
 #include "CMathParser.h"
+#include "Algorithms.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -151,8 +152,9 @@ void parser::eval_exp6(double& result)
 			strncpy_s(errormsg, "Unbalanced Parentheses", 30);
 		if (isfunc)
 		{
-			if (!strcmp(temp_token, "SIN"))
-				result = sinf(result);
+			if (!strcmp(temp_token, "SIN")) {
+				result = Algorithms::SinExpansion(result, 5);
+			}
 			else if (!strcmp(temp_token, "COS"))
 				result = cosf(result);
 			else if (!strcmp(temp_token, "TAN"))

@@ -25,6 +25,8 @@ class Utils {
 			float m[4][4] = { 0 };
 		};
 
+		static int factorial(int input);
+		long double pi = 3.14159265358979323846264338327950288419716939937510L;
 		void MultiplyMatrixVector(vec3d& i, vec3d& o, mat4x4& m);
 
 		mat4x4 DefineProjectionMatrix(float ScreenHeight, float ScreenWidth);
