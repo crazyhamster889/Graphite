@@ -26,9 +26,9 @@ void Renderer::FillTriangle(float x1, float y1, float x2, float y2, float x3, fl
 
 bool Renderer::WithinScreenLimits(Utils::vec3d& triProjected)
 {
-	if (abs(triProjected.x) > ScreenWidth && abs(triProjected.y) > ScreenHeight)
-		return false;	
-	return true;
+	if (abs(triProjected.x) > ScreenWidth/2 && abs(triProjected.y) > ScreenHeight/2)
+		return true;	
+	return false;
 }
 
 void Renderer::OnUserUpdate()
@@ -134,9 +134,7 @@ void Renderer::OnUserUpdate()
 	{
 		for (Utils::vec3d point : triProjected.p)
 		{
-			if (WithinScreenLimits(point))
 				continue;
-
 			sf::Vertex v1(sf::Vector2f(point.x, point.y));
 
 			v1.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
@@ -148,21 +146,23 @@ void Renderer::OnUserUpdate()
 			{
 				gridVertices.push_back(v1);
 			}
-		}
+		}	
 	}
 	sf::RectangleShape grid;
 
 	if (visibleGrid) {
 		for (int i = 0; i < (end(gridVertices) - begin(gridVertices)) - 2; i += 2)
 		{
-			grid.setPosition(gridVertices[i].position);
-			float angle = atan2(gridVertices[i].position.y - gridVertices[i + 1].position.y, gridVertices[i].position.x - gridVertices[i + 1].position.x);
-			grid.setRotation(angle * 180 / 3.1459f);
-			grid.setSize(sf::Vector2f(-sqrt(powf(gridVertices[i].position.y - gridVertices[i + 1].position.y, 2) + powf(gridVertices[i].position.x - gridVertices[i + 1].position.x, 2)), 0));
+			if ((i + 1) % 3 != 0) {
+				grid.setPosition(gridVertices[i].position);
+				float angle = atan2(gridVertices[i].position.y - gridVertices[i + 1].position.y, gridVertices[i].position.x - gridVertices[i + 1].position.x);
+				grid.setRotation(angle * 180 / 3.1459f);
+				grid.setSize(sf::Vector2f(-sqrt(powf(gridVertices[i].position.y - gridVertices[i + 1].position.y, 2) + powf(gridVertices[i].position.x - gridVertices[i + 1].position.x, 2)), 0));
 
-			grid.setOutlineColor(gridVertices[i].color);
-			grid.setOutlineThickness(1);
-			window.draw(grid);
+				grid.setOutlineColor(gridVertices[i].color);
+				grid.setOutlineThickness(1);
+				window.draw(grid);
+			}
 		}
 	}
 	window.draw(graph);

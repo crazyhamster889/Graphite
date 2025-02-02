@@ -1,14 +1,7 @@
 #include "Algorithms.h"
-<<<<<<< Updated upstream
 #include <future> 
-
-//#include <thrust/device_vector.h>
-//#include <thrust/sort.h>
-//#include <thrust/sort.h>
-=======
 #include <cmath> 
 #include <thread>
->>>>>>> Stashed changes
 
 using namespace std;
 
@@ -37,15 +30,24 @@ float Algorithms::SinExpansion(double num, double precision)
 {
 	float value = 0;
 
-	num = remainder(num + 3.1415f, 2 * 3.1415f);
+	num = remainder(num + 3.14159f, 2 * 3.14159f);
 
 	for (int n = 0; n < precision; n++) {
 		value += pow(-1.0, n) * pow(num, 2 * n + 1) / Utils::factorial(2 * n + 1);
 	}
 	return value;
 }
+float Algorithms::CosExpansion(double num, double precision)
+{
+	float value = 0;
 
+	num = remainder(num + 3.14159f, 2 * 3.14159f);
 
+	for (int n = 0; n < precision; n++) {
+		value += pow(-1.0, n) * pow(num, 2 * n) / Utils::factorial(2 * n);
+	}
+	return value;
+}
 float Algorithms::averageZ(const Utils::triangle& t) {
 	return (t.p[0].z + t.p[1].z + t.p[2].z) / 3.0f;
 }
@@ -86,12 +88,6 @@ void Algorithms::merge(vector<Utils::triangle>& vec, int left, int mid, int righ
 		k++;
 	}
 }
-/*void Algorithms::gpuMergeSort(vector<Utils::triangle>& vec) {
-	thrust::device_vector<Utils::triangle> d_vec(vec.begin(), vec.end()); // Copy to GPU
-	thrust::sort(d_vec.begin(), d_vec.end(), compareTriangles); // GPU parallel sort
-	thrust::copy(d_vec.begin(), d_vec.end(), vec.begin()); // Copy back to CPU
-}*/
-// Recursive merge sort with parallelization
 void Algorithms::parallelMergeSort(vector < Utils::triangle >& vec, int left, int right, int depth) {
 	if (left < right) {
 		int mid = left + (right - left) / 2;

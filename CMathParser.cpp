@@ -155,10 +155,11 @@ void parser::eval_exp6(double& result)
 			if (!strcmp(temp_token, "SIN")) {
 				result = Algorithms::SinExpansion(result, 5);
 			}
-			else if (!strcmp(temp_token, "COS"))
-				result = cosf(result);
+			else if (!strcmp(temp_token, "COS")) {
+				result = Algorithms::CosExpansion(result, 5);
+			}
 			else if (!strcmp(temp_token, "TAN"))
-				result = tanf(result);
+				result = Algorithms::SinExpansion(result, 5) / Algorithms::CosExpansion(result, 5);
 			else if (!strcmp(temp_token, "ASIN"))
 				result = asin(result);
 			else if (!strcmp(temp_token, "ACOS"))
