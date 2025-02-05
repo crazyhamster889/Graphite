@@ -43,25 +43,24 @@ void BuildGraph::GridBuilder()
 	CreateGridLine({ -gridSize, -gridSize, -gridSize }, { -gridSize, -gridSize, gridSize }, GridColour);
 }
 
-void BuildGraph::OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutionInput)
+void BuildGraph::OnUserCreate(string equationInput, float resolutionInput)
 {
 	for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
 	{
 		meshes[i].tris.clear();
 	}
-	float size = resolutionInput->getText().toFloat();
 
 	string equation = equationInput;
 	database.InsertIntoDatabase(*equation.data(), *equation.data());
 	parser ob;
 	Algorithms algorithms;
-	ob.eval_exp("z = " + to_string(size));
+	ob.eval_exp("z = " + to_string(resolutionInput));
 
-	for (float x = -gridSize; x <= gridSize; x += size)
+	for (float x = -gridSize; x <= gridSize; x += resolutionInput)
 	{
 		ob.eval_exp("x = " + to_string(x));
 
-		for (float y = -gridSize; y <= gridSize; y += size)
+		for (float y = -gridSize; y <= gridSize; y += resolutionInput)
 		{
 			ob.eval_exp("y = " + to_string(y));
 
@@ -78,7 +77,7 @@ void BuildGraph::OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutio
 				zXYOld = std::fmax(-gridSize, std::fmin(zXYOld, gridSize));
 				zYOld = std::fmax(-gridSize, std::fmin(zYOld, gridSize));
 				z = std::fmax(-gridSize, std::fmin(z, gridSize));
-				CreateQuad({ x + -size / 2.0f, zXYOld, y - size / 2.0f }, { x + size / 2.0f, zYOld, y - size / 2.0f }, { x + -size / 2.0f, zXOld, y + size / 2.0f }, { x + size / 2.0f, z, y + size / 2.0f }, 0, sf::Color::White);
+				CreateQuad({ x + -resolutionInput / 2.0f, zXYOld, y - resolutionInput / 2.0f }, { x + resolutionInput / 2.0f, zYOld, y - resolutionInput / 2.0f }, { x + -resolutionInput / 2.0f, zXOld, y + resolutionInput / 2.0f }, { x + resolutionInput / 2.0f, z, y + resolutionInput / 2.0f }, 0, sf::Color::White);
 			}
 		}
 	}

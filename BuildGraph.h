@@ -22,7 +22,7 @@ public:
 	void CreateQuad(Utils::vec3d point1, Utils::vec3d point2, Utils::vec3d point3, Utils::vec3d point4, int ID, sf::Color Color);
 	void CreateGridLine(Utils::vec3d Point1, Utils::vec3d Point2, sf::Color GridColour);
 	void GridBuilder();
-	void OnUserCreate(string equationInput, tgui::EditBox::Ptr resolutionInput);
+	void OnUserCreate(string equationInput, float resolutionInput);
 };
 
 #endif 

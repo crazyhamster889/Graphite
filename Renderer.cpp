@@ -26,13 +26,14 @@ void Renderer::FillTriangle(float x1, float y1, float x2, float y2, float x3, fl
 
 bool Renderer::WithinScreenLimits(Utils::vec3d& triProjected)
 {
-	if (abs(triProjected.x) > ScreenWidth/2 && abs(triProjected.y) > ScreenHeight/2)
+	if (abs(triProjected.x) > window.getSize().x && abs(triProjected.y) > (float)window.getSize().y)
 		return true;	
 	return false;
 }
 
 void Renderer::OnUserUpdate()
 {
+
 	Utils::mat4x4 matRotX, matRotY, matRotZ, output;
 	controls.DefineCameraPosition();
 
@@ -60,6 +61,11 @@ void Renderer::OnUserUpdate()
 			triTranslated.p[0].z = triRotatedZ.p[0].z + 30.0f;
 			triTranslated.p[1].z = triRotatedZ.p[1].z + 30.0f;
 			triTranslated.p[2].z = triRotatedZ.p[2].z + 30.0f;
+
+			triTranslated.p[0].x = triRotatedZ.p[0].x + 3.5f;
+			triTranslated.p[1].x = triRotatedZ.p[1].x + 3.5f;
+			triTranslated.p[2].x = triRotatedZ.p[2].x + 3.5f;
+
 
 			Utils::vec3d normal, line1, line2;
 			line1.x = tri.p[1].x - tri.p[0].x;
@@ -106,12 +112,12 @@ void Renderer::OnUserUpdate()
 			triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
 
 
-			triProjected.p[0].x *= 0.5f * (float)ScreenWidth;
-			triProjected.p[0].y *= 0.5f * (float)ScreenHeight;
-			triProjected.p[1].x *= 0.5f * (float)ScreenWidth;
-			triProjected.p[1].y *= 0.5f * (float)ScreenHeight;
-			triProjected.p[2].x *= 0.5f * (float)ScreenWidth;
-			triProjected.p[2].y *= 0.5f * (float)ScreenHeight;
+			triProjected.p[0].x *= 0.5f * (float)window.getSize().x;
+			triProjected.p[0].y *= 0.5f * (float)window.getSize().y;
+			triProjected.p[1].x *= 0.5f * (float)window.getSize().x;
+			triProjected.p[1].y *= 0.5f * (float)window.getSize().y;
+			triProjected.p[2].x *= 0.5f * (float)window.getSize().x;
+			triProjected.p[2].y *= 0.5f * (float)window.getSize().y;
 
 			if (i != 0)
 				triProjected.grid = true;
@@ -134,9 +140,12 @@ void Renderer::OnUserUpdate()
 	{
 		for (Utils::vec3d point : triProjected.p)
 		{
-				continue;
+			for (Utils::vec3d pointCheck : triProjected.p)
+			{
+				if (WithinScreenLimits(pointCheck))
+					break;
+			}
 			sf::Vertex v1(sf::Vector2f(point.x, point.y));
-
 			v1.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
 			if (!triProjected.grid)
 			{
@@ -147,6 +156,7 @@ void Renderer::OnUserUpdate()
 				gridVertices.push_back(v1);
 			}
 		}	
+		continue2:;
 	}
 	sf::RectangleShape grid;
 
