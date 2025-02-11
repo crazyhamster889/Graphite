@@ -32,8 +32,9 @@ public:
 	void ToggleGrid();
 	void Render();
 	void ToggleClourPicker(tgui::BackendGui& gui);
- 	void Graph(string equationInput, float resolutionInput, float sliderInput);
+ 	void Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color);
 	void loadWidgets(tgui::BackendGui& gui);
+	void ReferenceItems(tgui::ListBox* ListView);
 	bool run(tgui::BackendGui& gui);
 };
 

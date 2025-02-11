@@ -1,4 +1,7 @@
 #include "BuildGraph.h"
+#include <sstream>
+#include <sqlite3.h>
+#include <sqlite3.h>
 
 
 void BuildGraph::CreateQuad(Utils::vec3d point1, Utils::vec3d point2, Utils::vec3d point3, Utils::vec3d point4, int ID, sf::Color Color)
@@ -43,15 +46,19 @@ void BuildGraph::GridBuilder()
 	CreateGridLine({ -gridSize, -gridSize, -gridSize }, { -gridSize, -gridSize, gridSize }, GridColour);
 }
 
-void BuildGraph::OnUserCreate(string equationInput, float resolutionInput)
+void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int ID)
 {
+	sqlite3_stmt* stmt = NULL;
+
 	for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
 	{
 		meshes[i].tris.clear();
 	}
 
+
 	string equation = equationInput;
-	database.InsertIntoDatabase(*equation.data(), *equation.data());
+
+	database.InsertIntoEquationTable(*equation.data(), *equation.data(),*to_string(ID).data());
 	parser ob;
 	Algorithms algorithms;
 	ob.eval_exp("z = " + to_string(resolutionInput));

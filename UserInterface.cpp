@@ -6,6 +6,8 @@
 #include <Windows.h>
 using namespace std;
 
+int userID;
+
 UserInterface::UserInterface(sf::RenderWindow& targetWindow, BuildGraph& targetGraph, DatabaseClass& database)
 	: window(targetWindow), graph(targetGraph), databaseInstance(database), renderer(window, graph){}
 void UserInterface::ToggleGrid()
@@ -17,17 +19,14 @@ void UserInterface::ToggleClourPicker(tgui::BackendGui& gui)
 	gui.add(colourPicker);
 }
 
-void UserInterface::Graph(string equationInput, float resolutionInput, float sliderInput)
+void UserInterface::Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
 	if (equationInput.empty() != 1)
 	{
-		graph.OnUserCreate(equationInput, resolutionInput);
-	}
-	else
-	{
-		graph.OnUserCreate(databaseInstance.LastEquation()[0], resolutionInput);
+		graph.OnUserCreate(equationInput, resolutionInput, userID);
 	}
 	renderer.graphConstructor = graph;
+	renderer.baseColour = color;
 }
 
 void UserInterface::loadWidgets(tgui::BackendGui& gui)
@@ -39,17 +38,38 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 
 	interactionPanel->setSize({ "27%", "100%" });
 	interactionPanel->setPosition({ "0%", "0%" });
-	interactionPanel->setInheritedOpacity(1);
 
 	gui.add(interactionPanel);
+	interactionPanel->setEnabled(false);
 
 	tgui::EditBox::Ptr editBoxEquation = nullptr;
 	editBoxEquation = tgui::EditBox::create();
-	editBoxEquation->setSize({ "20%", "12%" });
-	editBoxEquation->setPosition({ "2%", "15%" });
+	editBoxEquation->setSize({ "20%", "5%" });
+	editBoxEquation->setPosition({ "2%", "20%" });
 	editBoxEquation->setDefaultText("Equation");
 	gui.add(editBoxEquation);
 	string equationOutput = (string)editBoxEquation->getText();
+
+	// LOGIN CODE
+
+
+
+	tgui::EditBox::Ptr usernameLogin = nullptr;
+	usernameLogin = tgui::EditBox::create();
+	usernameLogin->setSize({ "20%", "5%" });
+	usernameLogin->setPosition({ "40%", "20%" });
+	usernameLogin->setDefaultText("Username");
+	gui.add(usernameLogin);
+
+	tgui::EditBox::Ptr passwordLogin = nullptr;
+	passwordLogin = tgui::EditBox::create();
+	passwordLogin->setSize({ "20%", "5%" });
+	passwordLogin->setPosition({ "40%", "30%" });
+	passwordLogin->setDefaultText("Password");
+	gui.add(passwordLogin);
+
+	//LOGIN
+
 
 	auto editBoxResolution = tgui::EditBox::copy(editBoxEquation);
 	editBoxResolution->setSize({ "20%", "5%" });
@@ -74,32 +94,42 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	ListView->setPosition({ "2%", "55%" });
 	gui.add(ListView);
 
-	auto picture = tgui::Picture::create("Sprites/Logo.png");
-	picture->setSize({ "7%", "10%" });
-	picture->setPosition({"2%", "5%"});
-	picture->setInheritedOpacity(0.2);
-	gui.add(picture);
+	auto createAccount = tgui::Button::create("Create Account");
+	createAccount->setSize({ "20%", "5%" });
+	createAccount->setPosition({ "40%", "40%" });
+	createAccount->onClick([this, usernameLogin, passwordLogin, ListView]() {
+		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), *passwordLogin->getText().toStdString().data());
+		ListView->removeAllItems();
 
-	for (string item : databaseInstance.LastEquation())
-	{
-		ListView->addItem(item);
-	}
-	ListView->onItemSelect([this,ListView, editBoxResolution, slider]() {
-		std::string equationOutput = ListView->getSelectedItem().toStdString();
-		float resolution = editBoxResolution->getText().toFloat();
-		float gridSize = slider->getValue();
-
-		Graph(equationOutput, resolution, gridSize);
-		});
+		for (string item : databaseInstance.LastEquation(userID))
+		{
+			ListView->addItem(item);
+		}
+	});
+	gui.add(createAccount);
 
 	colourPicker = tgui::ColorPicker::create();
 	colourPicker->setSize({ "40%", "30%" });
 	colourPicker->setPosition({ "26%", "20%" });
 	colourPicker->setPositionLocked(true);
 	colourPicker->setColor(tgui::Color::Cyan);
+	tgui::Color color = colourPicker->getColor();
 	gui.add(colourPicker);
 	colourPicker->close();
-	renderer.baseColour = colourPicker->getColor();
+
+	auto picture = tgui::Picture::create("Sprites/Logo.png");
+	picture->setSize({ "7%", "10%" });
+	picture->setPosition({"2%", "5%"});
+	picture->setInheritedOpacity(0.2);
+	gui.add(picture);
+
+	ListView->onItemSelect([this,ListView, editBoxResolution, slider, color]() {
+		std::string equationOutput = ListView->getSelectedItem().toStdString();
+		float resolution = editBoxResolution->getText().toFloat();
+		float gridSize = slider->getValue();
+
+		Graph(equationOutput, resolution, gridSize, color);
+		});
 
 
 	auto colourPickerButton = tgui::Button::create("ƒ");
@@ -122,22 +152,43 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 		ToggleGrid();
 		});
 
+	auto MenuBar = tgui::MenuBar::create();
+
+	MenuBar->setSize({ "20%", "4%" });
+	MenuBar->setPosition({ "0%", "0%" });
+	MenuBar->addMenu("File");
+	MenuBar->addMenu("Settings");
+	MenuBar->addMenu("Login");
+	MenuBar->addMenu("Help");
+	MenuBar->setTextSize(20);
+	MenuBar->addMenuItem("File", "Save");
+	MenuBar->addMenuItem("File", "Program Info");
+	MenuBar->addMenuItem("File", "Exit");
+	MenuBar->setWidth("5%");
+
+	MenuBar->connectMenuItem("File", "Exit", [this, &gui]() {
+		window.close();
+		});
+	gui.add(MenuBar);
+
 	colourPickerButton->onClick([this,&gui]() {
 		ToggleClourPicker(gui);
 		});
-		button->onPress([this,editBoxEquation, editBoxResolution, slider]() {
-		std::string equationOutput = editBoxEquation->getText().toStdString();
-		float resolution = editBoxResolution->getText().toFloat();
-		float gridSize = slider->getValue();
+	button->onPress([this,editBoxEquation, editBoxResolution, slider, color]() {
+	std::string equationOutput = editBoxEquation->getText().toStdString();
+	float resolution = editBoxResolution->getText().toFloat();
+	float gridSize = slider->getValue();
 
-		Graph(equationOutput, resolution, gridSize);
-		});
+	Graph(equationOutput, resolution, gridSize, color);
+	});
 }
+
 void UserInterface::Render() 
 {
 	renderer.matProj = renderer.maths.DefineProjectionMatrix(window.getSize().y, window.getSize().x);
 	renderer.OnUserUpdate();
 	renderer.visibleGrid = gridVisible;
+	renderer.baseColour = colourPicker->getColor();
 }
 
 bool UserInterface::run(tgui::BackendGui& gui) {

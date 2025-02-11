@@ -5,8 +5,9 @@
 class DatabaseClass {
 public:
 	void SetupDatabase();
-	void InsertIntoDatabase(const char& database, const char& contents);
-	vector<string> LastEquation();
+	void InsertIntoEquationTable(const char& EquationName, const char& Equation, const char ID);
+	int InsertIntoUserTable(const char& Username, const char& Password);
+	vector<string> LastEquation(int userID);
 };
 
 #endif 

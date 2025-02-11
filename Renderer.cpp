@@ -11,15 +11,10 @@ void Renderer::FillTriangle(float x1, float y1, float x2, float y2, float x3, fl
 {
 	sf::ConvexShape convex;
 
-	// resize it to 5 points
 	convex.setPointCount(3);
-
-	// define the points
 	convex.setPoint(0, sf::Vector2f(x1, y1));
 	convex.setPoint(1, sf::Vector2f(x2, y2));
 	convex.setPoint(2, sf::Vector2f(x3, y3));
-
-	//window.draw(convex);
 
 	return;
 }
@@ -92,8 +87,6 @@ void Renderer::OnUserUpdate()
 				float dp = light_direction.x * normal.x + light_direction.y * normal.y + light_direction.z * normal.z;
 				float result = std::fmax(0.0f, std::fmin(dp, 0.8f));
 				triProjected.color = baseColour;
-
-
 				triProjected.light = result;
 			}
 			else
