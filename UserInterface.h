@@ -35,6 +35,8 @@ public:
  	void Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color);
 	void loadWidgets(tgui::BackendGui& gui);
 	void ReferenceItems(tgui::ListBox* ListView);
+	void MainMenu(tgui::BackendGui& gui);
+	void ViewSelectionMenu(tgui::BackendGui& gui);
 	bool run(tgui::BackendGui& gui);
 };
 

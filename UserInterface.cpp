@@ -29,18 +29,146 @@ void UserInterface::Graph(string equationInput, float resolutionInput, float sli
 	renderer.baseColour = color;
 }
 
+void UserInterface::MainMenu(tgui::BackendGui& gui)
+{
+	tgui::Button::Ptr createNewProject = nullptr;
+	createNewProject = tgui::Button::create("Create Project");
+	createNewProject->setSize({ "30%", "10%" });
+	createNewProject->setPosition({ "35%", "35%" });
+
+	gui.add(createNewProject);
+
+	tgui::Button::Ptr settings = nullptr;
+	settings = tgui::Button::create("Settings");
+	settings->setSize({ "30%", "10%" });
+	settings->setPosition({ "35%", "50%" });
+
+	gui.add(settings);
+
+	tgui::Button::Ptr help = nullptr;
+	help = tgui::Button::create("Help");
+	help->setSize({ "30%", "10%" });
+	help->setPosition({ "35%", "60%" });
+
+	gui.add(help);
+
+	tgui::Button::Ptr selectGraphs = nullptr;
+	selectGraphs = tgui::Button::create("Select Graphs");
+	selectGraphs->setSize({ "30%", "10%" });
+	selectGraphs->setPosition({ "35%", "70%" });
+
+	gui.add(selectGraphs);
+
+	createNewProject->onClick([this, &gui]() {
+		gui.removeAllWidgets();
+		loadWidgets(gui);
+		});
+
+	selectGraphs->onClick([this, &gui]() {
+		gui.removeAllWidgets();
+		ViewSelectionMenu(gui);
+		});
+
+}
+
+void UserInterface::ViewSelectionMenu(tgui::BackendGui& gui)
+{
+
+	tgui::EditBox::Ptr usernameLogin = nullptr;
+	usernameLogin = tgui::EditBox::create();
+	usernameLogin->setSize({ "35%", "5%" });
+	usernameLogin->setPosition({ "2%", "20%" });
+	usernameLogin->setDefaultText("Username");
+	gui.add(usernameLogin);
+
+	tgui::EditBox::Ptr passwordLogin = nullptr;
+	passwordLogin = tgui::EditBox::create();
+	passwordLogin->setSize({ "35%", "5%" });
+	passwordLogin->setPosition({ "2%", "30%" });
+	passwordLogin->setDefaultText("Password");
+	gui.add(passwordLogin);
+
+	tgui::EditBox::Ptr classLogin = nullptr;
+	classLogin = tgui::EditBox::create();
+	classLogin->setSize({ "15%", "5%" });
+	classLogin->setPosition({ "2%", "35%" });
+	classLogin->setDefaultText("Class");
+	gui.add(classLogin);
+
+	tgui::EditBox::Ptr courseName = nullptr;
+	courseName = tgui::EditBox::create();
+	courseName->setSize({ "15%", "5%" });
+	courseName->setPosition({ "22%", "35%" });
+	courseName->setDefaultText("Course");
+	gui.add(courseName);
+
+	tgui::EditBox::Ptr courseSubject = nullptr;
+	courseSubject = tgui::EditBox::create();
+	courseSubject->setSize({ "15%", "5%" });
+	courseSubject->setPosition({ "22%", "40%" });
+	courseSubject->setDefaultText("Course Subject");
+	gui.add(courseSubject);
+
+	auto ListView = tgui::ListBox::create();
+	ListView->setSize({ "35%", "25%" });
+	ListView->setPosition({ "2%", "65%" });
+	gui.add(ListView);
+
+	auto createCourse = tgui::Button::create("Create Course");
+	createCourse->setSize({ "15%", "10%" });
+	createCourse->setPosition({ "22%", "45%" });
+	createCourse->onClick([this, courseSubject, courseName]() {
+		databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());
+		});
+
+	gui.add(createCourse);
+
+	auto createClass = tgui::Button::create("Create Class");
+	createClass->setSize({ "15%", "10%" });
+	createClass->setPosition({ "2%", "45%" });
+	createClass->onClick([this, classLogin, courseName]() {
+		cout << "Creating Class";
+		databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data());
+		});
+
+
+	gui.add(createClass);
+
+	auto createAccount = tgui::Button::create("Create Account / Login");
+	createAccount->setSize({ "35%", "10%" });
+	createAccount->setPosition({ "2%", "55%" });
+	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin]() {
+		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), 
+													  *passwordLogin->getText().toStdString().data(),
+													  *classLogin->getText().toStdString().data());
+		ListView->removeAllItems();
+
+		for (string item : databaseInstance.LastEquation(userID))
+		{
+			ListView->addItem(item);
+		}
+		});
+	gui.add(createAccount);
+
+
+	auto Graphing = tgui::Button::create("Graphing page");
+	Graphing->setSize({ "35%", "10%" });
+	Graphing->setPosition({ "2%", "80%" });
+	Graphing->onClick([this, &gui, ListView]() {
+		gui.removeAllWidgets();
+		loadWidgets(gui);
+		});
+	gui.add(Graphing);
+}
+
 void UserInterface::loadWidgets(tgui::BackendGui& gui)
 {
-	auto blackTheme = tgui::Theme::create("TGUI-1.5/themes/Dark.txt");
-	blackTheme->setDefault("TGUI-1.5/themes/Dark.txt");
-
 	auto interactionPanel = tgui::Panel::create();
 
 	interactionPanel->setSize({ "27%", "100%" });
 	interactionPanel->setPosition({ "0%", "0%" });
 
 	gui.add(interactionPanel);
-	interactionPanel->setEnabled(false);
 
 	tgui::EditBox::Ptr editBoxEquation = nullptr;
 	editBoxEquation = tgui::EditBox::create();
@@ -49,26 +177,6 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	editBoxEquation->setDefaultText("Equation");
 	gui.add(editBoxEquation);
 	string equationOutput = (string)editBoxEquation->getText();
-
-	// LOGIN CODE
-
-
-
-	tgui::EditBox::Ptr usernameLogin = nullptr;
-	usernameLogin = tgui::EditBox::create();
-	usernameLogin->setSize({ "20%", "5%" });
-	usernameLogin->setPosition({ "40%", "20%" });
-	usernameLogin->setDefaultText("Username");
-	gui.add(usernameLogin);
-
-	tgui::EditBox::Ptr passwordLogin = nullptr;
-	passwordLogin = tgui::EditBox::create();
-	passwordLogin->setSize({ "20%", "5%" });
-	passwordLogin->setPosition({ "40%", "30%" });
-	passwordLogin->setDefaultText("Password");
-	gui.add(passwordLogin);
-
-	//LOGIN
 
 
 	auto editBoxResolution = tgui::EditBox::copy(editBoxEquation);
@@ -89,25 +197,6 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	gui.add(slider);
 	float gridSize = slider->getValue();
 
-	auto ListView = tgui::ListBox::create();
-	ListView->setSize({ "20%", "30%" });
-	ListView->setPosition({ "2%", "55%" });
-	gui.add(ListView);
-
-	auto createAccount = tgui::Button::create("Create Account");
-	createAccount->setSize({ "20%", "5%" });
-	createAccount->setPosition({ "40%", "40%" });
-	createAccount->onClick([this, usernameLogin, passwordLogin, ListView]() {
-		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), *passwordLogin->getText().toStdString().data());
-		ListView->removeAllItems();
-
-		for (string item : databaseInstance.LastEquation(userID))
-		{
-			ListView->addItem(item);
-		}
-	});
-	gui.add(createAccount);
-
 	colourPicker = tgui::ColorPicker::create();
 	colourPicker->setSize({ "40%", "30%" });
 	colourPicker->setPosition({ "26%", "20%" });
@@ -123,7 +212,12 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	picture->setInheritedOpacity(0.2);
 	gui.add(picture);
 
-	ListView->onItemSelect([this,ListView, editBoxResolution, slider, color]() {
+	auto ListView = tgui::ListBox::create();
+	ListView->setSize({ "20%", "25%" });
+	ListView->setPosition({ "2%", "60%" });
+	gui.add(ListView);
+
+	ListView->onItemSelect([this, ListView, editBoxResolution, slider, color]() {
 		std::string equationOutput = ListView->getSelectedItem().toStdString();
 		float resolution = editBoxResolution->getText().toFloat();
 		float gridSize = slider->getValue();
@@ -131,6 +225,10 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 		Graph(equationOutput, resolution, gridSize, color);
 		});
 
+	for (string item : databaseInstance.LastEquation(userID))
+	{
+		ListView->addItem(item);
+	}
 
 	auto colourPickerButton = tgui::Button::create("ƒ");
 	colourPickerButton->setSize({ "3%", "5%" });
@@ -154,22 +252,24 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 
 	auto MenuBar = tgui::MenuBar::create();
 
-	MenuBar->setSize({ "20%", "4%" });
+	MenuBar->setSize({ "20%", "3%" });
 	MenuBar->setPosition({ "0%", "0%" });
 	MenuBar->addMenu("File");
 	MenuBar->addMenu("Settings");
+	MenuBar->addMenuItem("Settings Page");
 	MenuBar->addMenu("Login");
+	MenuBar->addMenuItem("Account Page");
 	MenuBar->addMenu("Help");
 	MenuBar->setTextSize(20);
 	MenuBar->addMenuItem("File", "Save");
 	MenuBar->addMenuItem("File", "Program Info");
 	MenuBar->addMenuItem("File", "Exit");
-	MenuBar->setWidth("5%");
+
+	gui.add(MenuBar);
 
 	MenuBar->connectMenuItem("File", "Exit", [this, &gui]() {
 		window.close();
 		});
-	gui.add(MenuBar);
 
 	colourPickerButton->onClick([this,&gui]() {
 		ToggleClourPicker(gui);
@@ -181,6 +281,11 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 
 	Graph(equationOutput, resolution, gridSize, color);
 	});
+
+	MenuBar->connectMenuItem("Login", "Account Page", [this, &gui]() {
+		gui.removeAllWidgets();
+		ViewSelectionMenu(gui);
+		});
 }
 
 void UserInterface::Render() 
@@ -188,14 +293,17 @@ void UserInterface::Render()
 	renderer.matProj = renderer.maths.DefineProjectionMatrix(window.getSize().y, window.getSize().x);
 	renderer.OnUserUpdate();
 	renderer.visibleGrid = gridVisible;
-	renderer.baseColour = colourPicker->getColor();
+	if (colourPicker != NULL)
+		renderer.baseColour = colourPicker->getColor();
 }
 
 bool UserInterface::run(tgui::BackendGui& gui) {
 
 	try
 	{
-		loadWidgets(gui);
+		auto blackTheme = tgui::Theme::create("TGUI-1.5/themes/Dark.txt");
+		blackTheme->setDefault("TGUI-1.5/themes/Dark.txt");
+		MainMenu(gui);
 		return true;
 	}
 	catch (const tgui::Exception& e)

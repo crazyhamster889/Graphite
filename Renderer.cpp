@@ -5,20 +5,10 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
+// Creates the vertex buffer
 sf::VertexArray graph(sf::Triangles);
 
-void Renderer::FillTriangle(float x1, float y1, float x2, float y2, float x3, float y3, sf::RenderWindow& window)
-{
-	sf::ConvexShape convex;
-
-	convex.setPointCount(3);
-	convex.setPoint(0, sf::Vector2f(x1, y1));
-	convex.setPoint(1, sf::Vector2f(x2, y2));
-	convex.setPoint(2, sf::Vector2f(x3, y3));
-
-	return;
-}
-
+// Checks whether the vertex is within screen limits 
 bool Renderer::WithinScreenLimits(Utils::vec3d& triProjected)
 {
 	if (abs(triProjected.x) > window.getSize().x && abs(triProjected.y) > (float)window.getSize().y)
@@ -26,26 +16,44 @@ bool Renderer::WithinScreenLimits(Utils::vec3d& triProjected)
 	return false;
 }
 
+// Main loop function for the renderer
 void Renderer::OnUserUpdate()
 {
-
+	// Creates the matrices required for later calculations 
 	Utils::mat4x4 matRotX, matRotY, matRotZ, output;
+
+	// instantiates the controls object to start defining the camera position 
 	controls.DefineCameraPosition();
 
+	/* 
+	Uses the MathsUtils class to define the rotation matrices
+	MatRotX: Allows the user to rotate the graph around the X axis
+	MatRotY: Allows the user to rotate around the y axis
+	MatRotZ: Currently isn't used, may be useful if client needs a third way of panning around the object
+	*/
 	matRotX = maths.matRotX(controls.xRot);
 	matRotY = maths.matRotY(controls.yRot);
 	matRotZ = maths.matRotZ(0);
 
+
+	/* 
+	* by multiplying the two rotation matrices together we get an ouput matrix that enables us to rotate on two different axises
+	* We achieve this by multiplying MatRotX and MatRotY together then taking the output and multiplying that by MatRotZ
+	* This is done to make sure the multiplication of the matrices is done in the right order, matrix multiplication is not commutable 
+    */
 	output = maths.MultiplyMatrix(matRotX, matRotY);
 	output = maths.MultiplyMatrix(output, matRotZ);
 
-	vector<Utils::triangle> vecTrianglesToRaster;
+	// A list of triangles to rasterise later 
+	vector<Utils::triangle> trianglesToRaster;
 	
-
+	// Loops through all the meshes, this consists of the graph itself and the grid 
 	for (int i = 0; i <= (end(graphConstructor.meshes) - begin(graphConstructor.meshes)) - 1; i++)
 	{
+		// Loops through all the triangles, in the constructed mesh 
 		for (auto tri : graphConstructor.meshes[i].tris)
 		{
+			// Defines the triangle data to be used at multiple 
 			Utils::triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
 
 			maths.MultiplyMatrixVector(tri.p[0], triRotatedZ.p[0], output);
@@ -117,11 +125,11 @@ void Renderer::OnUserUpdate()
 			else
 				triProjected.grid = false;
 
-			vecTrianglesToRaster.push_back(triProjected);
+			trianglesToRaster.push_back(triProjected);
 		}
 	}
 	Algorithms algorithms;
-	algorithms.parallelMergeSort(vecTrianglesToRaster, 0, vecTrianglesToRaster.size() - 1);
+	algorithms.parallelMergeSort(trianglesToRaster, 0, trianglesToRaster.size() - 1);
 
 	window.clear(sf::Color::White);
 	graph.clear();
@@ -129,7 +137,7 @@ void Renderer::OnUserUpdate()
 
 	int gridVertex = 0;
 
-	for (Utils::triangle triProjected : vecTrianglesToRaster)
+	for (Utils::triangle triProjected : trianglesToRaster)
 	{
 		for (Utils::vec3d point : triProjected.p)
 		{
@@ -141,13 +149,9 @@ void Renderer::OnUserUpdate()
 			sf::Vertex v1(sf::Vector2f(point.x, point.y));
 			v1.color = sf::Color(triProjected.color.r * triProjected.light, triProjected.color.g * triProjected.light, triProjected.color.b * triProjected.light, triProjected.color.a);
 			if (!triProjected.grid)
-			{
 				graph.append(v1);
-			}
 			else
-			{
 				gridVertices.push_back(v1);
-			}
 		}	
 		continue2:;
 	}
