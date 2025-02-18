@@ -13,7 +13,6 @@ public:
 	static float averageZ(const Utils::triangle& t);
 	static float SinExpansion(double num, double precision = 15);
 	static float CosExpansion(double num, double precision = 15);
-	static float TanExpansion(double num, double precision = 15);
 	static bool compareTriangles(const Utils::triangle& t1, const Utils::triangle& t2);
 	static void merge(vector<Utils::triangle>& vec, int left, int mid, int right);
 	static void parallelMergeSort(vector < Utils::triangle >& vec, int left, int right, int depth = 0);

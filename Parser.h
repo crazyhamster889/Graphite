@@ -1,7 +1,5 @@
-// CMathParser.h
-
-#ifndef CMATHPARSER_H
-#define CMATHPARSER_H
+#ifndef PARSER_H
+#define PARSER_H
 
 #include <iostream>
 #include <cstdlib>
@@ -21,17 +19,17 @@ class parser {
     char token[256]; // holds current token
     char tok_type; // holds token's type
     double vars[NUMVARS]; // holds variable's values
-    void eval_exp1(double& result);
-    void eval_exp2(double& result);
-    void eval_exp3(double& result);
-    void eval_exp4(double& result);
-    void eval_exp5(double& result);
-    void eval_exp6(double& result);
-    void get_token();
+    char equationCharArray[1024];
+    void VariableAssignment(double& result);
+    void EvaluateAddition(double& result);
+    void EvaluateMultiplication(double& result);
+    void ExponentEvaluation(double& result);
+    void UnaryEvaluation(double& result);
+    void EvaluateFunction(double& result);
+    void RegisterToken();
 public:
-    parser();
-    double eval_exp(const std::string& exp);
+    float EvaluateExpression(const string& exp);
     char errormsg[64];
 };
 
-#endif // CMATHPARSER_H
+#endif 

@@ -6,287 +6,205 @@
 #include <Windows.h>
 using namespace std;
 
-int userID;
-
 UserInterface::UserInterface(sf::RenderWindow& targetWindow, BuildGraph& targetGraph, DatabaseClass& database)
 	: window(targetWindow), graph(targetGraph), databaseInstance(database), renderer(window, graph){}
-void UserInterface::ToggleGrid()
-{
-	gridVisible = !gridVisible;
-}
-void UserInterface::ToggleClourPicker(tgui::BackendGui& gui)
-{
-	gui.add(colourPicker);
-}
 
+void UserInterface::ToggleGrid() { gridVisible = !gridVisible; }
+void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPicker); }
 void UserInterface::Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
 	if (equationInput.empty() != 1)
-	{
 		graph.OnUserCreate(equationInput, resolutionInput, userID);
-	}
 	renderer.graphConstructor = graph;
 	renderer.baseColour = color;
 }
 
 void UserInterface::MainMenu(tgui::BackendGui& gui)
 {
-	tgui::Button::Ptr createNewProject = nullptr;
-	createNewProject = tgui::Button::create("Create Project");
-	createNewProject->setSize({ "30%", "10%" });
-	createNewProject->setPosition({ "35%", "35%" });
+	auto menuGroup = tgui::Group::create();
+	tgui::Button::Ptr createNewProject = createButton("Create Project", { "30%", "10%" }, { "35%", "35%" }, menuGroup);
+	tgui::Button::Ptr settings = createButton("Settings", { "30%", "10%" }, { "35%", "50%" }, menuGroup);
+	tgui::Button::Ptr help = createButton("Help", { "30%", "10%" }, { "35%", "60%" }, menuGroup);
+	tgui::Button::Ptr selectGraphs = createButton("Select Graphs", { "30%", "10%" }, { "35%", "70%" }, menuGroup);
+	gui.add(menuGroup);
 
-	gui.add(createNewProject);
+	createNewProject->onClick([this, &gui, menuGroup]() {
+		menuGroup->setVisible(false);
+		loadWidgets(gui); });
 
-	tgui::Button::Ptr settings = nullptr;
-	settings = tgui::Button::create("Settings");
-	settings->setSize({ "30%", "10%" });
-	settings->setPosition({ "35%", "50%" });
-
-	gui.add(settings);
-
-	tgui::Button::Ptr help = nullptr;
-	help = tgui::Button::create("Help");
-	help->setSize({ "30%", "10%" });
-	help->setPosition({ "35%", "60%" });
-
-	gui.add(help);
-
-	tgui::Button::Ptr selectGraphs = nullptr;
-	selectGraphs = tgui::Button::create("Select Graphs");
-	selectGraphs->setSize({ "30%", "10%" });
-	selectGraphs->setPosition({ "35%", "70%" });
-
-	gui.add(selectGraphs);
-
-	createNewProject->onClick([this, &gui]() {
-		gui.removeAllWidgets();
-		loadWidgets(gui);
-		});
-
-	selectGraphs->onClick([this, &gui]() {
-		gui.removeAllWidgets();
-		ViewSelectionMenu(gui);
-		});
-
+	selectGraphs->onClick([this, &gui, menuGroup]() {
+		menuGroup->setVisible(false);
+		ViewSelectionMenu(gui); });
 }
 
 void UserInterface::ViewSelectionMenu(tgui::BackendGui& gui)
 {
+	auto selectionMenuGroup = tgui::Group::create();
 
-	tgui::EditBox::Ptr usernameLogin = nullptr;
-	usernameLogin = tgui::EditBox::create();
-	usernameLogin->setSize({ "35%", "5%" });
-	usernameLogin->setPosition({ "2%", "20%" });
-	usernameLogin->setDefaultText("Username");
-	gui.add(usernameLogin);
+	tgui::EditBox::Ptr usernameLogin = createEditBox("Username", { "35%", "5%" }, { "2%", "20%" }, selectionMenuGroup);
+	tgui::EditBox::Ptr passwordLogin = createEditBox("Password", {"35%", "5%"}, {"2%", "30%"}, selectionMenuGroup);
+	tgui::EditBox::Ptr classLogin = createEditBox("Class", {"15%", "5%"}, {"2%", "35%"}, selectionMenuGroup);
+	tgui::EditBox::Ptr courseName = createEditBox("Course", {"15%", "5%"}, { "22%", "35%" }, selectionMenuGroup);
+	tgui::EditBox::Ptr courseSubject = createEditBox("Course Subject", { "15%", "5%" }, { "22%", "40%" }, selectionMenuGroup);
+	tgui::Button::Ptr createClass = createButton("Create Class", { "15%", "10%" }, { "2%", "45%" }, selectionMenuGroup);
+	tgui::Button::Ptr createAccount = createButton("Create Account / Login", { "35%", "10%" }, { "2%", "55%" }, selectionMenuGroup);
+	tgui::Button::Ptr createCourse = createButton("Create Course", { "15%", "10%" }, { "22%", "45%" }, selectionMenuGroup);
+	tgui::Button::Ptr Graphing = createButton("Graphing page", { "35%", "10%" }, { "2%", "90%" }, selectionMenuGroup);
+	tgui::ListBox::Ptr ListView = createListView({ "35%", "25%" }, { "2%", "65%" }, selectionMenuGroup);
 
-	tgui::EditBox::Ptr passwordLogin = nullptr;
-	passwordLogin = tgui::EditBox::create();
-	passwordLogin->setSize({ "35%", "5%" });
-	passwordLogin->setPosition({ "2%", "30%" });
-	passwordLogin->setDefaultText("Password");
-	gui.add(passwordLogin);
-
-	tgui::EditBox::Ptr classLogin = nullptr;
-	classLogin = tgui::EditBox::create();
-	classLogin->setSize({ "15%", "5%" });
-	classLogin->setPosition({ "2%", "35%" });
-	classLogin->setDefaultText("Class");
-	gui.add(classLogin);
-
-	tgui::EditBox::Ptr courseName = nullptr;
-	courseName = tgui::EditBox::create();
-	courseName->setSize({ "15%", "5%" });
-	courseName->setPosition({ "22%", "35%" });
-	courseName->setDefaultText("Course");
-	gui.add(courseName);
-
-	tgui::EditBox::Ptr courseSubject = nullptr;
-	courseSubject = tgui::EditBox::create();
-	courseSubject->setSize({ "15%", "5%" });
-	courseSubject->setPosition({ "22%", "40%" });
-	courseSubject->setDefaultText("Course Subject");
-	gui.add(courseSubject);
-
-	auto ListView = tgui::ListBox::create();
-	ListView->setSize({ "35%", "25%" });
-	ListView->setPosition({ "2%", "65%" });
-	gui.add(ListView);
-
-	auto createCourse = tgui::Button::create("Create Course");
-	createCourse->setSize({ "15%", "10%" });
-	createCourse->setPosition({ "22%", "45%" });
-	createCourse->onClick([this, courseSubject, courseName]() {
-		databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());
-		});
-
-	gui.add(createCourse);
-
-	auto createClass = tgui::Button::create("Create Class");
-	createClass->setSize({ "15%", "10%" });
-	createClass->setPosition({ "2%", "45%" });
-	createClass->onClick([this, classLogin, courseName]() {
-		cout << "Creating Class";
-		databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data());
-		});
-
-
-	gui.add(createClass);
-
-	auto createAccount = tgui::Button::create("Create Account / Login");
-	createAccount->setSize({ "35%", "10%" });
-	createAccount->setPosition({ "2%", "55%" });
+	createCourse->onClick([this, courseSubject, courseName]() 
+	{databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());});
+	createClass->onClick([this, classLogin, courseName]() 
+	{databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data()); });
 	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin]() {
 		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), 
 													  *passwordLogin->getText().toStdString().data(),
 													  *classLogin->getText().toStdString().data());
 		ListView->removeAllItems();
+		populateList(ListView, databaseInstance); });
+	Graphing->onClick([this, &gui, selectionMenuGroup]() {
+		selectionMenuGroup->setVisible(false);
+		loadWidgets(gui); });
 
-		for (string item : databaseInstance.LastEquation(userID))
-		{
-			ListView->addItem(item);
-		}
-		});
-	gui.add(createAccount);
-
-
-	auto Graphing = tgui::Button::create("Graphing page");
-	Graphing->setSize({ "35%", "10%" });
-	Graphing->setPosition({ "2%", "80%" });
-	Graphing->onClick([this, &gui, ListView]() {
-		gui.removeAllWidgets();
-		loadWidgets(gui);
-		});
-	gui.add(Graphing);
+	selectionMenuGroup->setVisible(true);
+	gui.add(selectionMenuGroup);
 }
 
 void UserInterface::loadWidgets(tgui::BackendGui& gui)
 {
+	auto graphingGroup = tgui::Group::create();
 	auto interactionPanel = tgui::Panel::create();
-
 	interactionPanel->setSize({ "27%", "100%" });
 	interactionPanel->setPosition({ "0%", "0%" });
 
-	gui.add(interactionPanel);
+	graphingGroup->add(interactionPanel);
+	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "20%" }, graphingGroup);
+	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "30%" }, graphingGroup);
+	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "20%" }, graphingGroup);
+	auto listView = createListView({ "20%", "35%" }, { "2%", "60%" }, graphingGroup);
+	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "85%" }, graphingGroup);
 
-	tgui::EditBox::Ptr editBoxEquation = nullptr;
-	editBoxEquation = tgui::EditBox::create();
-	editBoxEquation->setSize({ "20%", "5%" });
-	editBoxEquation->setPosition({ "2%", "20%" });
-	editBoxEquation->setDefaultText("Equation");
-	gui.add(editBoxEquation);
-	string equationOutput = (string)editBoxEquation->getText();
-
-
-	auto editBoxResolution = tgui::EditBox::copy(editBoxEquation);
-	editBoxResolution->setSize({ "20%", "5%" });
-	editBoxResolution->setPosition({ "2%", "30%" });
-	editBoxResolution->setText("0.3");
-	gui.add(editBoxResolution);
-	float resolution = editBoxEquation->getText().toFloat();
-
-	auto toolBar = tgui::Panel::create();
-	toolBar->setSize({ "100%", "5%" });
-	toolBar->setPosition({ "0%", "0%" });
-	gui.add(toolBar);
-
-	auto slider = tgui::Slider::create();
-	slider->setSize({ "20%", "3%" });
-	slider->setPosition({ "2.5%", "50%" });
-	gui.add(slider);
-	float gridSize = slider->getValue();
+	auto toolBar = tgui::Panel::create({ "100%", "5%" });
+	graphingGroup->add(toolBar);
+	auto checkBox = createCheckBox({ "2%","3%" }, { "2%", "40%" }, graphingGroup);
+	auto MenuBar = createMenuBar(gui, graphingGroup);
+	auto slider = createSlider({ "20%","3%" }, { "2.5%", "50%" }, graphingGroup);
 
 	colourPicker = tgui::ColorPicker::create();
 	colourPicker->setSize({ "40%", "30%" });
 	colourPicker->setPosition({ "26%", "20%" });
 	colourPicker->setPositionLocked(true);
 	colourPicker->setColor(tgui::Color::Cyan);
-	tgui::Color color = colourPicker->getColor();
-	gui.add(colourPicker);
+	graphingGroup->add(colourPicker);
 	colourPicker->close();
 
-	auto picture = tgui::Picture::create("Sprites/Logo.png");
-	picture->setSize({ "7%", "10%" });
-	picture->setPosition({"2%", "5%"});
-	picture->setInheritedOpacity(0.2);
-	gui.add(picture);
+	listView->onItemSelect([this, listView, editBoxResolution, slider]() {
+		Graph(
+			listView->getSelectedItem().toStdString(),
+			editBoxResolution->getText().toFloat(),
+			slider->getValue(),
+			colourPicker->getColor()
+		); });
 
-	auto ListView = tgui::ListBox::create();
-	ListView->setSize({ "20%", "25%" });
-	ListView->setPosition({ "2%", "60%" });
-	gui.add(ListView);
+	graphButton->onPress([this, editBoxEquation, editBoxResolution, slider]() {
+		Graph(
+			editBoxEquation->getText().toStdString(),
+			editBoxResolution->getText().toFloat(),
+			slider->getValue(),
+			colourPicker->getColor()
+		); });
 
-	ListView->onItemSelect([this, ListView, editBoxResolution, slider, color]() {
-		std::string equationOutput = ListView->getSelectedItem().toStdString();
-		float resolution = editBoxResolution->getText().toFloat();
-		float gridSize = slider->getValue();
+	populateList(listView, databaseInstance);
+	colourPickerButton->onClick([this,&gui]() {ToggleClourPicker(gui);});
+	graphingGroup->setVisible(true);
+	gui.add(graphingGroup);
+}
 
-		Graph(equationOutput, resolution, gridSize, color);
-		});
-
+void UserInterface::populateList(tgui::ListBox::Ptr listView, DatabaseClass databaseInstance) {
 	for (string item : databaseInstance.LastEquation(userID))
 	{
-		ListView->addItem(item);
+		listView->addItem(item);
 	}
+}
 
-	auto colourPickerButton = tgui::Button::create("ƒ");
-	colourPickerButton->setSize({ "3%", "5%" });
-	colourPickerButton->setPosition({ "22%", "20%" });
-	gui.add(colourPickerButton);
+tgui::Button::Ptr UserInterface::createButton(const std::string& text, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+{
+	auto button = tgui::Button::create(text);
+	button->setSize(size);
+	button->setPosition(position);
+	group->add(button);
+	return button;
+}
 
-	auto checkBox = tgui::CheckBox::create("Grid");
-	checkBox->setSize({ "2%", "3%" });
-	checkBox->setPosition({ "2%", "40%" });
-	gui.add(checkBox);
+tgui::EditBox::Ptr UserInterface::createEditBox(const std::string& placeholder, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+{
+	auto editBox = tgui::EditBox::create();
+	editBox->setSize(size);
+	editBox->setPosition(position);
+	editBox->setDefaultText(placeholder);
+	group->add(editBox);
+	return editBox;
+}
 
-	tgui::Button::Ptr button = nullptr;
-	button = tgui::Button::create("Graph");
-	button->setSize({ "20%", "10%" });
-	button->setPosition({ "2%", "85%" });
+tgui::Slider::Ptr UserInterface::createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+{
+	auto slider = tgui::Slider::create();
+	slider->setSize(size);
+	slider->setPosition(position);
+	group->add(slider);
+	return slider;
+}
 
-	gui.add(button);
-	checkBox->onClick([this]() {
-		ToggleGrid();
-		});
+tgui::ListBox::Ptr UserInterface::createListView(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group) {
+	auto listView = tgui::ListBox::create();
+	listView->setSize(size);
+	listView->setPosition(position);
+	group->add(listView);
+	return listView;
+}
 
-	auto MenuBar = tgui::MenuBar::create();
+tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+{
+	auto checkBox = tgui::CheckBox::create();
+	checkBox->setSize(size);
+	checkBox->setPosition(position);
+	group->add(checkBox);
+	checkBox->onClick([this]() { ToggleGrid(); });
+	return checkBox;
+}
+tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group)
+{
+	auto menuBar = tgui::MenuBar::create();
+	menuBar->setSize({ "20%", "3%" });
+	menuBar->setPosition({ "0%", "0%" });
 
-	MenuBar->setSize({ "20%", "3%" });
-	MenuBar->setPosition({ "0%", "0%" });
-	MenuBar->addMenu("File");
-	MenuBar->addMenu("Settings");
-	MenuBar->addMenuItem("Settings Page");
-	MenuBar->addMenu("Login");
-	MenuBar->addMenuItem("Account Page");
-	MenuBar->addMenu("Help");
-	MenuBar->setTextSize(20);
-	MenuBar->addMenuItem("File", "Save");
-	MenuBar->addMenuItem("File", "Program Info");
-	MenuBar->addMenuItem("File", "Exit");
+	menuBar->addMenu("File");
+	menuBar->addMenuItem("File", "Save");
+	menuBar->addMenuItem("File", "Program Info");
+	menuBar->addMenuItem("File", "Exit");
 
-	gui.add(MenuBar);
+	menuBar->addMenu("Settings");
+	menuBar->addMenuItem("Settings", "Settings Page");
 
-	MenuBar->connectMenuItem("File", "Exit", [this, &gui]() {
+	menuBar->addMenu("Login");
+	menuBar->addMenuItem("Login", "Account Page");
+
+	menuBar->addMenu("Help");
+	menuBar->setTextSize(20);
+
+	menuBar->connectMenuItem("File", "Exit", [this, &gui]() {
 		window.close();
 		});
 
-	colourPickerButton->onClick([this,&gui]() {
-		ToggleClourPicker(gui);
-		});
-	button->onPress([this,editBoxEquation, editBoxResolution, slider, color]() {
-	std::string equationOutput = editBoxEquation->getText().toStdString();
-	float resolution = editBoxResolution->getText().toFloat();
-	float gridSize = slider->getValue();
-
-	Graph(equationOutput, resolution, gridSize, color);
-	});
-
-	MenuBar->connectMenuItem("Login", "Account Page", [this, &gui]() {
-		gui.removeAllWidgets();
+	menuBar->connectMenuItem("Login", "Account Page", [this, &gui, group]() {
+		group->setVisible(false);
 		ViewSelectionMenu(gui);
 		});
+	group->add(menuBar);
+
+	return menuBar;
 }
+
 
 void UserInterface::Render() 
 {

@@ -56,6 +56,12 @@ void Renderer::OnUserUpdate()
 			// Defines the triangle data to be used at multiple 
 			Utils::triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
 
+
+			/*
+			* by multiplying the two rotation matrices together we get an ouput matrix that enables us to rotate on two different axises
+			* We achieve this by multiplying MatRotX and MatRotY together then taking the output and multiplying that by MatRotZ
+			* This is done to make sure the multiplication of the matrices is done in the right order, matrix multiplication is not commutable
+			*/
 			maths.MultiplyMatrixVector(tri.p[0], triRotatedZ.p[0], output);
 			maths.MultiplyMatrixVector(tri.p[1], triRotatedZ.p[1], output);
 			maths.MultiplyMatrixVector(tri.p[2], triRotatedZ.p[2], output);

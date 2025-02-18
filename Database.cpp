@@ -11,7 +11,6 @@ sqlite3* db;
 sqlite3_stmt* stmt;
 
 void DatabaseClass::SetupDatabase() {
-    std::cout << "Opened database successfully!";
     int exit_code = sqlite3_open("Graphs.db", &db);
     // This runs the SQL command to create the equation table
     const char* createEquationTable = "CREATE TABLE IF NOT EXISTS Equation_Table ("
@@ -199,9 +198,6 @@ vector<string> DatabaseClass::LastEquation(int userID)
         cerr << "Error opening database: " << sqlite3_errmsg(db) << endl;
         return temp;
     }
-
-    cout << "Working here!!";
-
     // Corrected query to get the last equation
     const char* selectSQL = "SELECT * FROM Equation_Table WHERE UserID = ? ORDER BY EquationID DESC LIMIT 100;";
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29728.190
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NEA_Engine", "NEA_Engine.vcxproj", "{D6194B82-0CEB-442C-B22F-FD155405481C}"
 EndProject
@@ -13,8 +13,8 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x64.ActiveCfg = Debug|x64
-		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x64.Build.0 = Debug|x64
+		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x64.ActiveCfg = Debug|Win32
+		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x64.Build.0 = Debug|Win32
 		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x86.ActiveCfg = Debug|Win32
 		{D6194B82-0CEB-442C-B22F-FD155405481C}.Debug|x86.Build.0 = Debug|Win32
 		{D6194B82-0CEB-442C-B22F-FD155405481C}.Release|x64.ActiveCfg = Release|x64

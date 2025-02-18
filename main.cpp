@@ -3,13 +3,9 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <Windows.h>
 
-#include "CMathParser.h"
+#include "Parser.h"
 #include "Database.h"
-#include "MathsUtils.h"
-#include "Algorithms.h"
-#include "Renderer.h"
 #include "BuildGraph.h"
-#include "CameraControls.h"
 #include "UserInterface.h"
 
 using namespace std;
@@ -27,7 +23,6 @@ int main()
 {
 	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
 	settings.antialiasingLevel = 8;
-	window.setFramerateLimit(1000);
 	window.setVerticalSyncEnabled(true);
 	tgui::Gui gui{ window };
 	UI.run(gui);

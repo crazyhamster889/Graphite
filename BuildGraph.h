@@ -1,6 +1,6 @@
 #include <vector>
 #include "MathsUtils.h"
-#include "CMathParser.h"
+#include "Parser.h"
 #include "Algorithms.h"
 #include "Database.h"
 #include <TGUI/TGUI.hpp>
