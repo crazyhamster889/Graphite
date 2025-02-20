@@ -9,6 +9,10 @@ public:
 	void InsertIntoCourseTable(const char& courseName, const char& subject);
 	void InsertIntoClassTable(const char& classCode, const char& courseName);
 	int InsertIntoUserTable(const char& username, const char& password, const char& className);
+	bool OpenDatabase();
+	bool ExecuteSQL(const char* sql);
+	bool PrepareAndExecute(const char* statement, initializer_list<const char*> params);
+	int PrepareAndExecuteSearch(const char* statement, initializer_list<const char*> params);
 	vector<string> LastEquation(int userID);
 };
 

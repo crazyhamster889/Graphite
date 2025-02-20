@@ -3,238 +3,205 @@ using namespace std;
 #include <iostream>
 #include <sqlite3.h>
 #include "Database.h"
+#include "Algorithms.h"
 #include <string>
 #include <Vector>
 
-char* error_message = nullptr;
-sqlite3* db;
+char* errorMessage = nullptr;
+sqlite3* database;
 sqlite3_stmt* stmt;
 
+// Opens the database
+bool DatabaseClass::OpenDatabase() {
+    if (sqlite3_open("Graphs.db", &database) != SQLITE_OK) {
+        // throws an error if the database can't be opened
+        cerr << "Can't open database: " << sqlite3_errmsg(database) << endl;
+        return false;
+    }
+    return true;
+}
+
+// Execute SQL
+bool DatabaseClass::ExecuteSQL(const char* sql) {
+    if (sqlite3_exec(database, sql, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
+        cerr << "SQL error: " << errorMessage << endl;
+        sqlite3_free(errorMessage);
+        return false;
+    }
+    return true;
+}
+
+// Prepare and execute SQL for inserting data
+bool DatabaseClass::PrepareAndExecute(const char* statement, initializer_list<const char*> params) {
+	// prepare the statement
+    if (sqlite3_prepare_v2(database, statement, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "SQL prepare error: " << sqlite3_errmsg(database) << endl;
+        return false;
+    }
+
+    // binds all the variables to the statement
+    int i = 1;
+    for (const char* param : params) 
+        sqlite3_bind_text(stmt, i++, param, -1, SQLITE_STATIC);
+
+	// if the statement is successful, return false, otherwise return true
+    bool success = (sqlite3_step(stmt) == SQLITE_OK) ? false : true;
+
+    sqlite3_finalize(stmt);
+    return success;
+}
+
+// Prepare and execute SQL for searching data
+int DatabaseClass::PrepareAndExecuteSearch(const char* statement, initializer_list<const char*> params) {
+    // prepare the statement
+    if (sqlite3_prepare_v2(database, statement, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "SQL prepare error: " << sqlite3_errmsg(database) << endl;
+        return false;
+    }
+
+	// binds all the variables to the statement
+    int i = 1;
+    for (const char* param : params) 
+        sqlite3_bind_text(stmt, i++, param, -1, SQLITE_STATIC);
+
+    int output = -1;
+	// if the search returns something then return the output
+    if (sqlite3_step(stmt) == SQLITE_ROW) 
+        output = sqlite3_column_int(stmt, 0);
+   
+    sqlite3_finalize(stmt);
+    return output;
+}
+
 void DatabaseClass::SetupDatabase() {
-    int exit_code = sqlite3_open("Graphs.db", &db);
-    // This runs the SQL command to create the equation table
-    const char* createEquationTable = "CREATE TABLE IF NOT EXISTS Equation_Table ("
+    int exit_code = sqlite3_open("Graphs.db", &database);
+	// Create tables if it doesn't exist
+    const char* createStatements[] = {
+        "CREATE TABLE IF NOT EXISTS Equation_Table ("
         "EquationID INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "UserID INTEGER, "
-        "EquationName TEXT NOT NULL, "
-        "Equation TEXT NOT NULL);";
-    exit_code = sqlite3_exec(db, createEquationTable, nullptr, nullptr, &error_message);
-    // This runs the SQL command to create the user table
-    const char* createUserTable = "CREATE TABLE IF NOT EXISTS User_Table ("
+        "UserID INTEGER, EquationName TEXT NOT NULL, Equation TEXT NOT NULL);",
+
+        "CREATE TABLE IF NOT EXISTS User_Table ("
         "UserID INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "ClassCode TEXT NOT NULL, "
-        "Username TEXT NOT NULL, "
-        "Password TEXT NOT NULL);";
-    exit_code = sqlite3_exec(db, createUserTable, nullptr, nullptr, &error_message);
-    // This runs the SQL command to create the course table
-    const char* createCourseTable = "CREATE TABLE IF NOT EXISTS Course_Table ("
-        "CourseName TEXT PRIMARY KEY NOT NULL, "
-        "Subject TEXT NOT NULL);";
-    exit_code = sqlite3_exec(db, createCourseTable, nullptr, nullptr, &error_message);
-    // This runs the SQL command to create the class table
-    const char* createClassTable = "CREATE TABLE IF NOT EXISTS Class_Table ("
-        "ClassCode TEXT PRIMARY KEY NOT NULL,"
-        "CourseName TEXT NOT NULL);";
-    exit_code = sqlite3_exec(db, createClassTable, nullptr, nullptr, &error_message);
+        "ClassCode TEXT NOT NULL, Username TEXT NOT NULL, Password TEXT NOT NULL);",
 
-    if (exit_code != SQLITE_OK) {
-        std::cerr << "SQL error: " << std::endl;
-    }
-    else {
-        std::cout << "Table created successfully!" << std::endl;
-    }
+        "CREATE TABLE IF NOT EXISTS Course_Table ("
+        "CourseName TEXT PRIMARY KEY NOT NULL, Subject TEXT NOT NULL);",
 
-    sqlite3_close(db);
+        "CREATE TABLE IF NOT EXISTS Class_Table ("
+        "ClassCode TEXT PRIMARY KEY NOT NULL, CourseName TEXT NOT NULL);"
+    };
+
+	// Iterates through the createStatements array and executes the SQL
+    for (const char* statement : createStatements)
+        ExecuteSQL(statement);
+
+    sqlite3_close(database);
     return;
 }
 
+// Insert into the equation table
 void DatabaseClass::InsertIntoEquationTable(const char& EquationName, const char& Equation, const char ID)
 {
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
-
-    if (sqlite3_open("Graphs.db", &db))
-    {
-        cout << "Can't open database";
-    }
-    const char* sqlCommand = "INSERT INTO Equation_Table (EquationName, Equation, UserID) VALUES (?, ?, ?);";
-
-    if (sqlite3_prepare_v2(db, sqlCommand, -1, &stmt, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
+    if (!OpenDatabase())
         return;
-    }
 
-    sqlite3_bind_text(stmt, 1, &EquationName, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, &Equation, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, &ID, -1, SQLITE_STATIC);
-
-    int result = sqlite3_step(stmt);
-    if (result == SQLITE_DONE) {
-        std::cout << "Data inserted successfully!" << std::endl;
-    }
-    else {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
-    }
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    const char* sqlCommand = "INSERT INTO Equation_Table (EquationName, Equation, UserID) VALUES (?, ?, ?);";
+    PrepareAndExecute(sqlCommand, { &EquationName, &Equation, &ID});
+    sqlite3_close(database);
     return;
 }
-
+// Insert into the course table
 void DatabaseClass::InsertIntoCourseTable(const char& courseName, const char& subject)
 {
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    if (!OpenDatabase()) return;
 
-    if (sqlite3_open("Graphs.db", &db))
-    {
-        cout << "Can't open database";
-    }
     const char* sqlCommand = "INSERT INTO Course_Table (CourseName, Subject) VALUES (?, ?);";
-
-    if (sqlite3_prepare_v2(db, sqlCommand, -1, &stmt, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
-        return;
-    }
-
-    sqlite3_bind_text(stmt, 1, &courseName, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, &subject, -1, SQLITE_STATIC);
-
-    int result = sqlite3_step(stmt);
-    if (result == SQLITE_DONE) {
-        std::cout << "Data inserted successfully!" << std::endl;
-    }
-    else {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
-    }
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    PrepareAndExecute(sqlCommand, { &courseName, &subject});
+    sqlite3_close(database);
     return;
 }
 
+// Insert into the class table
 void DatabaseClass::InsertIntoClassTable(const char& classCode, const char& courseName)
 {
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    if (!OpenDatabase()) return;
 
-    if (sqlite3_open("Graphs.db", &db))
-    {
-        cout << "Can't open database";
-    }
     const char* sqlCommand = "INSERT INTO Class_Table (ClassCode, CourseName) VALUES (?, ?);";
-
-    if (sqlite3_prepare_v2(db, sqlCommand, -1, &stmt, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
-        return;
-    }
-
-    sqlite3_bind_text(stmt, 1, &classCode, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, &courseName, -1, SQLITE_STATIC);
-
-    int result = sqlite3_step(stmt);
-    if (result == SQLITE_DONE) {
-        std::cout << "Data inserted successfully!" << std::endl;
-    }
-    else {
-        std::cerr << "Error executing statement: " << sqlite3_errmsg(db) << std::endl;
-    }
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    PrepareAndExecute(sqlCommand, { &classCode, &courseName });
+    sqlite3_close(database);
     return;
 }
 
+// Insert into the User table
 int DatabaseClass::InsertIntoUserTable(const char& username, const char& password, const char& className)
 {
-    sqlite3_open("Graphs.db", &db);
-    sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    if (!OpenDatabase()) return -1;
 
-    const char* selectSQL = "SELECT * FROM User_Table, Course_Table, Class_Table WHERE Username = ? AND Password = ?" 
-                            "AND Class_Table.ClassCode = ? AND Class_Table.CourseName = Course_Table.CourseName";
+    Algorithms algorithms;
+    string hashedUsername = algorithms.Hash(&username);
+    string hashedPassword = algorithms.Hash(&password);
 
-    if (sqlite3_prepare_v2(db, selectSQL, -1, &stmt, nullptr) != SQLITE_OK) {
-        cerr << "SQL error: " << sqlite3_errmsg(db) << endl;
+	// Using joins to join the Class table and the Course table when for data in the User class
+    const char* selectSQL =  "SELECT * FROM User_Table "
+    "INNER JOIN Class_Table ON User_Table.ClassCode = Class_Table.ClassCode "
+    "INNER JOIN Course_Table ON Class_Table.CourseName = Course_Table.CourseName "
+    "WHERE User_Table.Username = ? AND User_Table.Password = ? AND Class_Table.ClassCode = ?;";
+    int id = PrepareAndExecuteSearch(selectSQL, { hashedUsername.data(), hashedPassword.data(), &className});
+
+    // returns true if the search failed
+    if (id != -1)
+        return id;
+
+	// If the user didn't exist then insert the user into the User table
+    const char* sqlCommand = "INSERT INTO User_Table (ClassCode, Username, Password) VALUES (?, ?, ?);";
+
+    if (!PrepareAndExecute(sqlCommand, { &className, hashedUsername.data(), hashedPassword.data() })) {
+        sqlite3_close(database);
         return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, &username, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, &password, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, &className, -1, SQLITE_STATIC);
+    // Get inserted user ID
+    sqlite3_int64 newID = sqlite3_last_insert_rowid(database);
+    sqlite3_close(database);
 
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int id = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
-        sqlite3_close(db);
-        return id;
-    }
-    else
-    {
-        cout << "THIS RUNS";
-
-        const char* sqlCommand = "INSERT INTO User_Table (ClassCode, Username, Password) VALUES (?, ?, ?);";
-
-        if (sqlite3_prepare_v2(db, sqlCommand, -1, &stmt, nullptr) != SQLITE_OK) {
-            sqlite3_close(db);
-            return -1;
-        }
-
-        sqlite3_bind_text(stmt, 1, &className, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 2, &username, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 3, &password, -1, SQLITE_STATIC);
-
-        int result = sqlite3_step(stmt);
-
-        sqlite3_int64 ID = sqlite3_last_insert_rowid(db);
-
-        sqlite3_finalize(stmt);
-        sqlite3_close(db);
-
-        return ID;
-    }
-    return -1;
+    return newID;
 }
 
-vector<string> DatabaseClass::LastEquation(int userID)
+// Fetches all recent equations
+vector<string> DatabaseClass::FetchRecentEquations(int userID)
 {
-    vector<string> temp;
+    vector<string> foundEquations;
 
     // Ensure the database is open
-    if (sqlite3_open("Graphs.db", &db) != SQLITE_OK) {
-        cerr << "Error opening database: " << sqlite3_errmsg(db) << endl;
-        return temp;
-    }
+    if (!OpenDatabase()) return foundEquations;
+
     // Corrected query to get the last equation
     const char* selectSQL = "SELECT * FROM Equation_Table WHERE UserID = ? ORDER BY EquationID DESC LIMIT 100;";
 
-    int rc = sqlite3_prepare_v2(db, selectSQL, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL prepare error: " << sqlite3_errmsg(db) << endl;
-        return temp;
+	// Prepare the statement
+    if (sqlite3_prepare_v2(database, selectSQL, -1, &stmt, nullptr)) {
+        cerr << "SQL prepare error: " << sqlite3_errmsg(database) << endl;
+        return foundEquations;
     }
 
-    if (!stmt) {
-        cerr << "Statement is null before binding!" << endl;
-        return temp;
-    }
+	// each user has their own "Inventory" of equations, so we need to bind the user ID to the statement when searching for equations
+    sqlite3_bind_int(stmt, 1, userID);
 
-    rc = sqlite3_bind_int(stmt, 1, userID);
-    if (rc != SQLITE_OK) {
-        cerr << "SQL bind error: " << sqlite3_errmsg(db) << endl;
-        return temp;
-    }
-
-    // Execute query
+	// Fetch the equations
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 0);
         const char* contents = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
 
-        if (contents) {
-            string str(contents);
-            cout << "Retrieved value: " << id << " -> " << str << endl;
-            temp.push_back(str);
-        }
+        string str(contents);
+        foundEquations.push_back(str);
     }
 
-    // Finalize statement to avoid memory leaks
+	// Finalise the statement, to prevent memory leaks
     if (stmt) {
         sqlite3_finalize(stmt);
         stmt = nullptr;
     }
 
-    return temp;
+    return foundEquations;
 }

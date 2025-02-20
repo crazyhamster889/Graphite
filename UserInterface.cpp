@@ -6,12 +6,17 @@
 #include <Windows.h>
 using namespace std;
 
+// UserInterface constructor, sets up the window, the graph, renderer, and the database
 UserInterface::UserInterface(sf::RenderWindow& targetWindow, BuildGraph& targetGraph, DatabaseClass& database)
 	: window(targetWindow), graph(targetGraph), databaseInstance(database), renderer(window, graph){}
 
+// Toggles the grid visibility
 void UserInterface::ToggleGrid() { gridVisible = !gridVisible; }
+// Toggles the colour picker visibility
 void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPicker); }
-void UserInterface::Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
+
+// Creates a graph with the given equation, resolution, slider value, and colour
+void UserInterface::CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
 	if (equationInput.empty() != 1)
 		graph.OnUserCreate(equationInput, resolutionInput, userID);
@@ -19,9 +24,12 @@ void UserInterface::Graph(string equationInput, float resolutionInput, float sli
 	renderer.baseColour = color;
 }
 
-void UserInterface::MainMenu(tgui::BackendGui& gui)
+// Main menu for the user interface
+void UserInterface::MainMenuScreen(tgui::BackendGui& gui)
 {
+	// sets up the group to ensure that we can disable all the UI elements when switching screens
 	auto menuGroup = tgui::Group::create();
+	// creates all the UI elements with helper functions that I created to tidy the program
 	tgui::Button::Ptr createNewProject = createButton("Create Project", { "30%", "10%" }, { "35%", "35%" }, menuGroup);
 	tgui::Button::Ptr settings = createButton("Settings", { "30%", "10%" }, { "35%", "50%" }, menuGroup);
 	tgui::Button::Ptr help = createButton("Help", { "30%", "10%" }, { "35%", "60%" }, menuGroup);
@@ -30,17 +38,19 @@ void UserInterface::MainMenu(tgui::BackendGui& gui)
 
 	createNewProject->onClick([this, &gui, menuGroup]() {
 		menuGroup->setVisible(false);
-		loadWidgets(gui); });
+		GraphingScreen(gui); });
 
 	selectGraphs->onClick([this, &gui, menuGroup]() {
 		menuGroup->setVisible(false);
-		ViewSelectionMenu(gui); });
+		ViewSelectionScreen(gui); });
 }
 
-void UserInterface::ViewSelectionMenu(tgui::BackendGui& gui)
+// Selection menu for the user interface
+void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 {
 	auto selectionMenuGroup = tgui::Group::create();
 
+	// creates all the UI elements with helper functions that I created to tidy the program
 	tgui::EditBox::Ptr usernameLogin = createEditBox("Username", { "35%", "5%" }, { "2%", "20%" }, selectionMenuGroup);
 	tgui::EditBox::Ptr passwordLogin = createEditBox("Password", {"35%", "5%"}, {"2%", "30%"}, selectionMenuGroup);
 	tgui::EditBox::Ptr classLogin = createEditBox("Class", {"15%", "5%"}, {"2%", "35%"}, selectionMenuGroup);
@@ -52,6 +62,7 @@ void UserInterface::ViewSelectionMenu(tgui::BackendGui& gui)
 	tgui::Button::Ptr Graphing = createButton("Graphing page", { "35%", "10%" }, { "2%", "90%" }, selectionMenuGroup);
 	tgui::ListBox::Ptr ListView = createListView({ "35%", "25%" }, { "2%", "65%" }, selectionMenuGroup);
 
+	// sets up the callbacks for each button and the list view
 	createCourse->onClick([this, courseSubject, courseName]() 
 	{databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());});
 	createClass->onClick([this, classLogin, courseName]() 
@@ -62,15 +73,17 @@ void UserInterface::ViewSelectionMenu(tgui::BackendGui& gui)
 													  *classLogin->getText().toStdString().data());
 		ListView->removeAllItems();
 		populateList(ListView, databaseInstance); });
+	// changes screen by disabling the current group and enabling the graphing group
 	Graphing->onClick([this, &gui, selectionMenuGroup]() {
 		selectionMenuGroup->setVisible(false);
-		loadWidgets(gui); });
+		GraphingScreen(gui); });
 
+	// ensures the current group is visible
 	selectionMenuGroup->setVisible(true);
 	gui.add(selectionMenuGroup);
 }
 
-void UserInterface::loadWidgets(tgui::BackendGui& gui)
+void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 {
 	auto graphingGroup = tgui::Group::create();
 	auto interactionPanel = tgui::Panel::create();
@@ -78,6 +91,7 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	interactionPanel->setPosition({ "0%", "0%" });
 
 	graphingGroup->add(interactionPanel);
+	// creates all the UI elements with helper functions that I created to tidy the program
 	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "20%" }, graphingGroup);
 	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "30%" }, graphingGroup);
 	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "20%" }, graphingGroup);
@@ -90,6 +104,7 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	auto MenuBar = createMenuBar(gui, graphingGroup);
 	auto slider = createSlider({ "20%","3%" }, { "2.5%", "50%" }, graphingGroup);
 
+	// sets up the colour picker
 	colourPicker = tgui::ColorPicker::create();
 	colourPicker->setSize({ "40%", "30%" });
 	colourPicker->setPosition({ "26%", "20%" });
@@ -98,8 +113,9 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 	graphingGroup->add(colourPicker);
 	colourPicker->close();
 
+	// sets up the callbacks for each button and the list view
 	listView->onItemSelect([this, listView, editBoxResolution, slider]() {
-		Graph(
+		CreateGraph(
 			listView->getSelectedItem().toStdString(),
 			editBoxResolution->getText().toFloat(),
 			slider->getValue(),
@@ -107,21 +123,23 @@ void UserInterface::loadWidgets(tgui::BackendGui& gui)
 		); });
 
 	graphButton->onPress([this, editBoxEquation, editBoxResolution, slider]() {
-		Graph(
+		CreateGraph(
 			editBoxEquation->getText().toStdString(),
 			editBoxResolution->getText().toFloat(),
 			slider->getValue(),
 			colourPicker->getColor()
 		); });
 
+	// populates the list view with the equations 
 	populateList(listView, databaseInstance);
 	colourPickerButton->onClick([this,&gui]() {ToggleClourPicker(gui);});
 	graphingGroup->setVisible(true);
 	gui.add(graphingGroup);
 }
 
+// helper functions
 void UserInterface::populateList(tgui::ListBox::Ptr listView, DatabaseClass databaseInstance) {
-	for (string item : databaseInstance.LastEquation(userID))
+	for (string item : databaseInstance.FetchRecentEquations(userID))
 	{
 		listView->addItem(item);
 	}
@@ -172,6 +190,8 @@ tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Lay
 	checkBox->onClick([this]() { ToggleGrid(); });
 	return checkBox;
 }
+
+// sets up menu bar and the callbacks for each menu item
 tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group)
 {
 	auto menuBar = tgui::MenuBar::create();
@@ -198,7 +218,7 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 
 	menuBar->connectMenuItem("Login", "Account Page", [this, &gui, group]() {
 		group->setVisible(false);
-		ViewSelectionMenu(gui);
+		ViewSelectionScreen(gui);
 		});
 	group->add(menuBar);
 
@@ -208,6 +228,7 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 
 void UserInterface::Render() 
 {
+	// sets up the projection matrix for the renderer
 	renderer.matProj = renderer.maths.DefineProjectionMatrix(window.getSize().y, window.getSize().x);
 	renderer.OnUserUpdate();
 	renderer.visibleGrid = gridVisible;
@@ -216,17 +237,18 @@ void UserInterface::Render()
 }
 
 bool UserInterface::run(tgui::BackendGui& gui) {
-
+	// Try and catch to handle any errors when setting up the UI
 	try
 	{
+		// sets up the theme for the UI, using the incredible UI config by finjosh
 		auto blackTheme = tgui::Theme::create("TGUI-1.5/themes/Dark.txt");
 		blackTheme->setDefault("TGUI-1.5/themes/Dark.txt");
-		MainMenu(gui);
+		MainMenuScreen(gui);
 		return true;
 	}
 	catch (const tgui::Exception& e)
 	{
-		std::cerr << "Failed to load TGUI widgets: " << e.what() << std::endl;
+		std::cerr << "Failed to load TGUI widgets: " << e.what() << endl;
 		return false;
 	}
 }

@@ -10,7 +10,7 @@ using namespace std;
 
 class Renderer
 {
-	bool WithinScreenLimits(Utils::vec3d& triProjected);
+	bool WithinScreenLimits(Utils::triangle triangle);
 
 public:
 
@@ -25,9 +25,7 @@ public:
 	tgui::Color baseColour;
 
 	sf::RenderWindow& window;
-	void FillTriangle(float x1, float y1, float x2, float y2, float x3, float y3, sf::RenderWindow& window);
 	void OnUserUpdate();
-	void renderer();
 };
 
 #endif 

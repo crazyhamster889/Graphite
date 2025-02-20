@@ -33,19 +33,20 @@ public:
 	void ToggleGrid();
 	void Render();
 	void ToggleClourPicker(tgui::BackendGui& gui);
- 	void Graph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color);
+ 	void CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color);
+	void populateList(tgui::ListBox::Ptr listView, DatabaseClass databaseInstance);
+	void GraphingScreen(tgui::BackendGui& gui);
+	void ReferenceItems(tgui::ListBox* ListView);
+	void MainMenuScreen(tgui::BackendGui& gui);
+	void ViewSelectionScreen(tgui::BackendGui& gui);
+	bool run(tgui::BackendGui& gui);
+
 	tgui::Button::Ptr createButton(const std::string& text, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& gui);
 	tgui::EditBox::Ptr createEditBox(const std::string& placeholder, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
 	tgui::CheckBox::Ptr createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
 	tgui::Slider::Ptr createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
 	tgui::ListBox::Ptr createListView(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
 	tgui::MenuBar::Ptr createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group);
-	void populateList(tgui::ListBox::Ptr listView, DatabaseClass databaseInstance);
-	void loadWidgets(tgui::BackendGui& gui);
-	void ReferenceItems(tgui::ListBox* ListView);
-	void MainMenu(tgui::BackendGui& gui);
-	void ViewSelectionMenu(tgui::BackendGui& gui);
-	bool run(tgui::BackendGui& gui);
 };
 
 #endif

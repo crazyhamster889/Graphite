@@ -2,18 +2,20 @@
 #include <sstream>
 #include <sqlite3.h>
 
-
+// Create a quad with the given points and color
 void BuildGraph::CreateQuad(Utils::vec3d point1, Utils::vec3d point2, Utils::vec3d point3, Utils::vec3d point4, int ID, sf::Color Color)
 {
 	meshes[ID].tris.push_back({ point2,    point3,    point1, 0, false, Color });
 	meshes[ID].tris.push_back({ point4,    point3,    point2, 0, false, Color });
 }
 
+// creates a grid line by abusing the CreateQuad function
 void BuildGraph::CreateGridLine(Utils::vec3d Point1, Utils::vec3d Point2, sf::Color GridColour)
 {
 	CreateQuad(Point1, Point1, Point2, Point2, 1, GridColour);
 }
 
+// Create the grid
 void BuildGraph::GridBuilder()
 {
 	sf::Color GridColour = { 150,150,150,60 };
@@ -31,22 +33,23 @@ void BuildGraph::GridBuilder()
 	CreateGridLine({ 0, 1, -gridSize }, { 0, 1, gridSize }, sf::Color::Green);
 
 	// Define grid corners
-	vector<Utils::vec3d> topCorners = {
+	vector<Utils::vec3d> bottomCorners = {
 		{gridSize, 1, gridSize },
 		{gridSize, 1, -gridSize},
 		{-gridSize, 1, -gridSize},
 		{-gridSize, 1, gridSize}
 	};
 
-	vector<Utils::vec3d> bottomCorners;
-	bottomCorners.resize(4);
+	vector<Utils::vec3d> topCorners;
+	topCorners.resize(4);
+	// defines the bottom corners based on the top corners, also creates the vertical grid lines 
 	for (int i = 0; i < 4; i++) {
-		bottomCorners[i] = { topCorners[i].x, -gridSize, topCorners[i].z };
-		CreateGridLine(topCorners[i], bottomCorners[i], GridColour);
+		topCorners[i] = { bottomCorners[i].x, -gridSize, bottomCorners[i].z };
+		CreateGridLine(bottomCorners[i], topCorners[i], GridColour);
 	}
-
+	// creates the horizontal grid lines
 	for (int i = 0; i < 4; i++) {
-		CreateGridLine(bottomCorners[i], bottomCorners[(i + 1) % 4], GridColour);
+		CreateGridLine(topCorners[i], topCorners[(i + 1) % 4], GridColour);
 	}
 }
 
@@ -60,32 +63,44 @@ void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int I
 	string equation = equationInput;
 
 	database.InsertIntoEquationTable(*equation.data(), *equation.data(),*to_string(ID).data());
+	// instantiate the equation parser and algorithms class (Composition)
 	parser ob;
 	Algorithms algorithms;
+	// Defines the Z variable for the equation parser, this is just used to store the resolution value 
 	ob.EvaluateExpression("z = " + to_string(resolutionInput));
 
+	// loops through the x coordinates based on the resolution of the graph
 	for (float x = -gridSize; x <= gridSize; x += resolutionInput)
 	{
+		// Defines the X variable for the equation parser 
 		ob.EvaluateExpression("x = " + to_string(x));
 
 		for (float y = -gridSize; y <= gridSize; y += resolutionInput)
 		{
+			// Defines the Y variable for the equation parser 
 			ob.EvaluateExpression("y = " + to_string(y));
 
-			std::string ZXExpression = algorithms.replaceAll(equation, "y", "(Y-Z)");
+			// each face in the graph is defined by 4 points, which is made up of two triangles
+			// usually we would work triangles but when building the graph it's a lot easier to work with quads
+			string ZXExpression = algorithms.replaceAll(equation, "y", "(Y-Z)");
 			ZXExpression = algorithms.replaceAll(ZXExpression, "x", "(X-Z)");
 
+			// defines the 4 Z values needed to create the quad, some of the points need to link up to the previous quads
+			// so we need to evaluate the equation at the current point and the previous point
 			vector<float> zValues = {
 				-ob.EvaluateExpression(algorithms.replaceAll(equation, "x", "(X-Z)")),
 				-ob.EvaluateExpression(ZXExpression),
 				-ob.EvaluateExpression(algorithms.replaceAll(equation, "y", "(Y-Z)")),
 				-ob.EvaluateExpression(equation)
 			};
-
+			// if any of the grid vertices are within the grid volume then we allow the face to be rendered 
 			if (any_of(zValues.begin(), zValues.end(), [&](float z) { return z > -gridSize && z < gridSize; })) 
 			{
+				// but we becausee we're allowing the face to render if at least one of the vertices are within the volume
+				// we need to clamp the values to the grid volume
 				for_each(zValues.begin(), zValues.end(), [&](float& z) { z = std::clamp(z, -gridSize, gridSize); });
 
+				// render the quad with parser defined values
 				CreateQuad({ x - resolutionInput / 2.0f, zValues[1], y - resolutionInput / 2.0f },
 					{ x + resolutionInput / 2.0f, zValues[2], y - resolutionInput / 2.0f },
 					{ x - resolutionInput / 2.0f, zValues[0], y + resolutionInput / 2.0f },
@@ -94,6 +109,7 @@ void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int I
 		}
 	}
 
+	// create the grid
 	GridBuilder();
 	return;
 }

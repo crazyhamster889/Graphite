@@ -11,6 +11,16 @@
 #include <cmath>
 using namespace std;
 
+/* Order of operations
+* 
+* Variable assignment
+* Functions
+* Exponent Evaluation
+* Multiplication
+* Addition and subtraction
+* Unary Evaluation 
+*/
+
 // Parser entry point.
 float parser::EvaluateExpression(const string& exp)
 {
@@ -21,7 +31,7 @@ float parser::EvaluateExpression(const string& exp)
     strncpy_s(equationCharArray, exp.c_str(), sizeof(equationCharArray) - 1);
     equationCharArray[sizeof(equationCharArray) - 1] = '\0';
 
-    exp_ptr = equationCharArray;
+    expressionPointer = equationCharArray;
     RegisterToken();
 
     // Check if the expression is empty
@@ -45,23 +55,26 @@ float parser::EvaluateExpression(const string& exp)
 void parser::VariableAssignment(double& result)
 {
 	int slot;
-	char temp_token[80];
-	if (tok_type == VARIABLE)
+	char tempToken[80];
+	if (tokenIdentifier == VARIABLE)
 	{
 		// save old token
-		char* t_ptr = exp_ptr;
-		strncpy_s(temp_token, token, 20);
+		char* tokenPointer = expressionPointer;
+		strncpy_s(tempToken, token, 20);
 		// compute the index of the variable
 		slot = *token - 'A';
 		RegisterToken();
 		if (*token != '=')
 		{
-			exp_ptr = t_ptr; // return current token
-			strncpy_s(token, temp_token, 100); // restore old token
-			tok_type = VARIABLE;
+			// return current token
+			expressionPointer = tokenPointer; 
+			// restore old token
+			strncpy_s(token, tempToken, 100); 
+			tokenIdentifier = VARIABLE;
 		}
 		else {
-			RegisterToken(); // get next part of exp
+			// get next part of expression 
+			RegisterToken();
 			EvaluateAddition(result);
 
 			vars[slot] = result;
@@ -73,20 +86,20 @@ void parser::VariableAssignment(double& result)
 // Add or subtract two terms.
 void parser::EvaluateAddition(double& result)
 {
-	register char op;
-	double temp;
+	register char operation;
+	double partialResult;
 	EvaluateMultiplication(result);
-	while ((op = *token) == '+' || op == '-')
+	while ((operation = *token) == '+' || operation == '-')
 	{
 		RegisterToken();
-		EvaluateMultiplication(temp);
-		switch (op)
+		EvaluateMultiplication(partialResult);
+		switch (operation)
 		{
 		case '-':
-			result = result - temp;
+			result = result - partialResult;
 			break;
 		case '+':
-			result = result + temp;
+			result = result + partialResult;
 			break;
 		}
 	}
@@ -94,20 +107,21 @@ void parser::EvaluateAddition(double& result)
 // Multiply or divide two factors.
 void parser::EvaluateMultiplication(double& result)
 {
-	register char op;
-	double temp;
+	register char operation;
+	double partialResult;
 	ExponentEvaluation(result);
-	while ((op = *token) == '*' || op == '/')
+	while ((operation = *token) == '*' || operation == '/')
 	{
 		RegisterToken();
-		ExponentEvaluation(temp);
-		switch (op)
+		ExponentEvaluation(partialResult);
+
+		switch (operation)
 		{
 		case '*':
-			result = result * temp;
+			result = result * partialResult;
 			break;
 		case '/':
-			result = result / temp;
+			result = result / partialResult;
 			break;
 		}
 	}
@@ -127,24 +141,24 @@ void parser::ExponentEvaluation(double& result)
 // Evaluate a unary + or -.
 void parser::UnaryEvaluation(double& result)
 {
-	register char op;
-	op = 0;
-	if ((tok_type == DELIMITER) && *token == '+' || *token == '-')
+	register char unaryOperator;
+	unaryOperator = 0;
+	if ((tokenIdentifier == DELIMITER) && *token == '+' || *token == '-')
 	{
-		op = *token;
+		unaryOperator = *token;
 		RegisterToken();
 	}
 	EvaluateFunction(result);
-	if (op == '-')
+	if (unaryOperator == '-')
 		result = -result;
 }
 
-
+// Evaluate a function
 void parser::EvaluateFunction(double& result) {
-	bool isfunc = (tok_type == FUNCTION);
-	string temp_token = token;
+	bool isfunction = (tokenIdentifier == FUNCTION);
+	string tempToken = token;
 
-	if (isfunc) {
+	if (isfunction) {
 		RegisterToken();
 	}
 
@@ -152,8 +166,9 @@ void parser::EvaluateFunction(double& result) {
 		RegisterToken();
 		EvaluateAddition(result);
 
-		if (isfunc) {
-			static const unordered_map<string, function<double(double)>> func_map = {
+		if (isfunction) {
+			// shortcut for mapping strings to program functions
+			static const map<string, function<double(double)>> functionMap = {
 				{"SIN",   [](double x) { return Algorithms::SinExpansion(x, 5); }},
 				{"COS",   [](double x) { return Algorithms::CosExpansion(x, 5); }},
 				{"TAN",   [](double x) { return Algorithms::SinExpansion(x, 5) / Algorithms::CosExpansion(x, 5); }},
@@ -168,15 +183,15 @@ void parser::EvaluateFunction(double& result) {
 				{"SQR",   [](double x) { return x * x; }}, {"ROUND", [](double x) { return round(x); }}
 			};
 
-			auto it = func_map.find(temp_token);
-			if (it != func_map.end()) {
+			auto it = functionMap.find(tempToken);
+			if (it != functionMap.end()) {
 				result = it->second(result);
 			}
 		}
 		RegisterToken();
 	}
 	else {
-		switch (tok_type) {
+		switch (tokenIdentifier) {
 		case VARIABLE:
 			result = vars[*token - 'A'];
 			break;
@@ -193,37 +208,43 @@ void parser::EvaluateFunction(double& result) {
 // Obtain the next token.
 void parser::RegisterToken()
 {
-	register char* temp;
-	tok_type = 0;
-	temp = token;
-	*temp = '\0';
-	if (!*exp_ptr)  // at end of expression
+	register char* tokenPointer;
+	tokenIdentifier = 0;
+	tokenPointer = token;
+	*tokenPointer = '\0';
+	// already at the end of the expression
+	if (!*expressionPointer)  
 		return;
-	while (isspace(*exp_ptr))  // skip over white space
-		++exp_ptr;
+	// skip over white space
+	while (isspace(*expressionPointer))  
+		++expressionPointer;
 
-	if (strchr("+-*/%^=()", *exp_ptr))
+	// if the character in the expression at the pointer is the characters +-*/%^=()
+	if (strchr("+-*/%^=()", *expressionPointer))
 	{
-		tok_type = DELIMITER;
-		*temp++ = *exp_ptr++;  // advance to next char
+		tokenIdentifier = DELIMITER;
+		// advance to next character
+		*tokenPointer++ = *expressionPointer++; 
 	}
 
-	else if (isalpha(*exp_ptr))
+	else if (isalpha(*expressionPointer))
 	{
-		while (!strchr(" +-/*%^=()\t\r", *exp_ptr) && (*exp_ptr))
-			*temp++ = toupper(*exp_ptr++);
-		while (isspace(*exp_ptr))  // skip over white space
-			++exp_ptr;
-		tok_type = (*exp_ptr == '(') ? FUNCTION : VARIABLE;
+		while (!strchr(" +-/*%^=()\t\r", *expressionPointer) && (*expressionPointer))
+			*tokenPointer++ = toupper(*expressionPointer++);
+		// skip over white space
+		while (isspace(*expressionPointer))  
+			++expressionPointer;
+		// if the token is a part of a funcction or a variable, depending on whether a bracket is present
+		tokenIdentifier = (*expressionPointer == '(') ? FUNCTION : VARIABLE;
+	}
+	// if the token is a number then we define it as a number
+	else if (isdigit(*expressionPointer) || *expressionPointer == '.')
+	{
+		while (!strchr(" +-/*%^=()\t\r", *expressionPointer) && (*expressionPointer))
+			*tokenPointer++ = toupper(*expressionPointer++);
+		tokenIdentifier = NUMBER;
 	}
 
-	else if (isdigit(*exp_ptr) || *exp_ptr == '.')
-	{
-		while (!strchr(" +-/*%^=()\t\r", *exp_ptr) && (*exp_ptr))
-			*temp++ = toupper(*exp_ptr++);
-		tok_type = NUMBER;
-	}
-
-	*temp = '\0';
+	*tokenPointer = '\0';
 }
 

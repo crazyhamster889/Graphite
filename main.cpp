@@ -14,30 +14,42 @@ const float ScreenWidth = 1500;
 const float ScreenHeight = 1000;
 
 sf::ContextSettings settings;
-sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "I LOVE BIRDS", sf::Style::Resize, settings);
+sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "GRAPHITE", sf::Style::Resize, settings);
+// Instantiates program components (Composition)
 DatabaseClass database;
 BuildGraph graph(database);
 UserInterface UI(window, graph, database);
 
 int main()
 {
+	// Sets up the window settings and hides the console window
 	::ShowWindow(::GetConsoleWindow(), SW_HIDE);
 	settings.antialiasingLevel = 8;
 	window.setVerticalSyncEnabled(true);
+
+	// Run GUI setup
 	tgui::Gui gui{ window };
 	UI.run(gui);
+
+	// Sets up the database
 	database.SetupDatabase();
+
 	while (window.isOpen())
 	{
 		sf::Event event;
+
+		// Handles UI events 
 		while (window.pollEvent(event))
 		{
 			gui.handleEvent(event);
 			if (event.type == sf::Event::Closed)
 				window.close();
 		}
+
+		// Renders and draws the UI
 		UI.Render();
 		gui.draw();
+
 		window.display();
 	}
     return 0;
