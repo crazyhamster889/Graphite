@@ -18,8 +18,16 @@ void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPic
 // Creates a graph with the given equation, resolution, slider value, and colour
 void UserInterface::CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
-	if (equationInput.empty() != 1)
+	// ensures the resolution is not 0
+	if (resolutionInput == 0)
+		return;
+	// equation format validation
+	std::regex invalidPattern(R"([^0-9+\-*/^().a-zA-Z\s])");
+	if (equationInput.empty() != 1  && !regex_search(equationInput, invalidPattern))
 		graph.OnUserCreate(equationInput, resolutionInput, userID);
+	else
+		MessageBox(NULL, L"Invalid Equation", L"Error", MB_OK);
+
 	renderer.graphConstructor = graph;
 	renderer.baseColour = color;
 }
@@ -67,7 +75,8 @@ void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 	{databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());});
 	createClass->onClick([this, classLogin, courseName]() 
 	{databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data()); });
-	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin]() {
+	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin]()
+	{
 		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), 
 													  *passwordLogin->getText().toStdString().data(),
 													  *classLogin->getText().toStdString().data());
@@ -92,9 +101,9 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 
 	graphingGroup->add(interactionPanel);
 	// creates all the UI elements with helper functions that I created to tidy the program
-	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "20%" }, graphingGroup);
+	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "10%" }, graphingGroup);
 	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "30%" }, graphingGroup);
-	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "20%" }, graphingGroup);
+	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "10%" }, graphingGroup);
 	auto listView = createListView({ "20%", "35%" }, { "2%", "60%" }, graphingGroup);
 	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "85%" }, graphingGroup);
 

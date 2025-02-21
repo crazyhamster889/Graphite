@@ -101,7 +101,7 @@ void DatabaseClass::SetupDatabase() {
 }
 
 // Insert into the equation table
-void DatabaseClass::InsertIntoEquationTable(const char& EquationName, const char& Equation, const char ID)
+void DatabaseClass::InsertIntoEquationTable(const char& EquationName, const char& Equation, const char& ID)
 {
     if (!OpenDatabase())
         return;
@@ -148,7 +148,7 @@ int DatabaseClass::InsertIntoUserTable(const char& username, const char& passwor
     "INNER JOIN Course_Table ON Class_Table.CourseName = Course_Table.CourseName "
     "WHERE User_Table.Username = ? AND User_Table.Password = ? AND Class_Table.ClassCode = ?;";
     int id = PrepareAndExecuteSearch(selectSQL, { hashedUsername.data(), hashedPassword.data(), &className});
-
+    cout << id;
     // returns true if the search failed
     if (id != -1)
         return id;

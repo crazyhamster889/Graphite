@@ -62,7 +62,11 @@ void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int I
 
 	string equation = equationInput;
 
-	database.InsertIntoEquationTable(*equation.data(), *equation.data(),*to_string(ID).data());
+	cout << ID;
+	cout << to_string(ID);
+	cout << *to_string(ID).c_str();
+
+	database.InsertIntoEquationTable(*equation.data(), *equation.data(), *to_string(ID).c_str());
 	// instantiate the equation parser and algorithms class (Composition)
 	parser ob;
 	Algorithms algorithms;

@@ -15,9 +15,9 @@ enum types { DELIMITER = 1, VARIABLE, NUMBER, FUNCTION };
 const int NUMVARS = 26;
 
 class parser {
-    char* exp_ptr; // points to the expression
+    char* expressionPointer; // points to the expression
     char token[256]; // holds current token
-    char tok_type; // holds token's type
+    char tokenIdentifier; // holds token's type
     double vars[NUMVARS]; // holds variable's values
     char equationCharArray[1024];
     void VariableAssignment(double& result);
