@@ -20,8 +20,8 @@ void CameraControls::DefineCameraPosition() {
 		Calculate the new rotation based on the initial click position and the current mouse position,
 		dividing by a sensitivity factor
 		*/ 
-		xRot = (xRotInitial)+(yInitial + position.y) / 1000;
-		yRot = (yRotInitial)+(xInitial - position.x) / 1000;
+		xRot = (xRotInitial)+(yInitial + position.y) / 1000 * (sensitivity);
+		yRot = (yRotInitial)+(xInitial - position.x) / 1000 * (sensitivity);
 	}
 	else {InitialClick = false;}
 }

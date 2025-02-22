@@ -19,6 +19,8 @@ public:
 
 	float xRotInitial = 0.0f;
 	float yRotInitial = 0.0f;
+
+	float sensitivity = 5;
 	bool InitialClick = false;
 
 	void DefineCameraPosition();

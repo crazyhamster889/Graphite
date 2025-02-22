@@ -20,10 +20,11 @@ bool Renderer::WithinScreenLimits(Utils::triangle triangle)
 }
 
 // Main loop function for the renderer
-void Renderer::OnUserUpdate()
+void Renderer::OnUserUpdate(float width, float height)
 {
 	// clears the screen for next refresh
 	window.clear(sf::Color::White);
+	window.setView(sf::View(sf::FloatRect(0, 0, width, height)));
 	graph.clear();
 
 	// Creates the matrices required for later calculations 
@@ -122,8 +123,8 @@ void Renderer::OnUserUpdate()
 			// Project the triangle onto the screen by multiplying the final position by the projection matrix
 			for (int j = 0; j < 3; ++j) {
 				maths.MultiplyMatrixVector(triTranslated.p[j], triProjected.p[j], matProj);
-				triProjected.p[j].x = (triProjected.p[j].x + 1.0f) * 0.5f * window.getSize().x;
-				triProjected.p[j].y = (triProjected.p[j].y + 1.0f) * 0.5f * window.getSize().y;
+				triProjected.p[j].x = (triProjected.p[j].x + 1.0f) * 0.5f * width;
+				triProjected.p[j].y = (triProjected.p[j].y + 1.0f) * 0.5f * height;
 			}
 
 			// Set grid mode based on iteration index

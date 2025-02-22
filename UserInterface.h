@@ -27,10 +27,15 @@ public:
 	DatabaseClass databaseInstance;
 	Renderer renderer;
 
-	bool gridVisible;
+	tgui::Theme::Ptr Theme;
+
+	bool gridVisible = false;
+	bool themeEnabled = false;
+	bool rendererVisible = true;
 	int userID;
 
 	void ToggleGrid();
+	void ToggleLightMode();
 	void Render();
 	void ToggleClourPicker(tgui::BackendGui& gui);
  	void CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color);
@@ -39,6 +44,7 @@ public:
 	void ReferenceItems(tgui::ListBox* ListView);
 	void MainMenuScreen(tgui::BackendGui& gui);
 	void ViewSelectionScreen(tgui::BackendGui& gui);
+	void SettingsMenuScreen(tgui::BackendGui& gui);
 	bool run(tgui::BackendGui& gui);
 
 	tgui::Button::Ptr createButton(const std::string& text, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& gui);

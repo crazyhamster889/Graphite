@@ -25,7 +25,7 @@ public:
 	tgui::Color baseColour;
 
 	sf::RenderWindow& window;
-	void OnUserUpdate();
+	void OnUserUpdate(float width, float height);
 };
 
 #endif 

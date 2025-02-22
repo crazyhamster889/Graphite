@@ -12,6 +12,16 @@ UserInterface::UserInterface(sf::RenderWindow& targetWindow, BuildGraph& targetG
 
 // Toggles the grid visibility
 void UserInterface::ToggleGrid() { gridVisible = !gridVisible; }
+// Toggle light mode
+void UserInterface::ToggleLightMode() 
+{ 
+	themeEnabled = !themeEnabled;
+	cout << themeEnabled;
+	if (themeEnabled)
+		Theme->setDefault("TGUI-1.5/themes/Dark.txt");
+	else 
+		Theme->setDefault("TGUI-1.5/themes/Light.txt");
+}
 // Toggles the colour picker visibility
 void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPicker); }
 
@@ -19,8 +29,10 @@ void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPic
 void UserInterface::CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
 	// ensures the resolution is not 0
-	if (resolutionInput == 0)
+	if (resolutionInput == 0) {
+		MessageBox(NULL, L"No resolution specified", L"Error", MB_OK);
 		return;
+	}
 	// equation format validation
 	std::regex invalidPattern(R"([^0-9+\-*/^().a-zA-Z\s])");
 	if (equationInput.empty() != 1  && !regex_search(equationInput, invalidPattern))
@@ -44,13 +56,51 @@ void UserInterface::MainMenuScreen(tgui::BackendGui& gui)
 	tgui::Button::Ptr selectGraphs = createButton("Select Graphs", { "30%", "10%" }, { "35%", "70%" }, menuGroup);
 	gui.add(menuGroup);
 
+	settings->onClick([this, &gui, menuGroup]() {
+		menuGroup->setVisible(false);
+		rendererVisible = true;
+		SettingsMenuScreen(gui); });
+
 	createNewProject->onClick([this, &gui, menuGroup]() {
+		rendererVisible = true;
 		menuGroup->setVisible(false);
 		GraphingScreen(gui); });
 
 	selectGraphs->onClick([this, &gui, menuGroup]() {
 		menuGroup->setVisible(false);
 		ViewSelectionScreen(gui); });
+}
+
+void UserInterface::SettingsMenuScreen(tgui::BackendGui& gui)
+{
+	auto settingsGroup = tgui::Group::create();
+	auto switchTheme = createCheckBox({ "30%","5%" }, { "2.5%", "25%" }, settingsGroup);
+	switchTheme->onClick([this, &gui]() { ToggleLightMode(); gui.removeAllWidgets(); SettingsMenuScreen(gui); });
+	auto sensitivity = createSlider({ "30%","3%" }, { "2.5%", "40%" }, settingsGroup);
+	auto MenuBar = createMenuBar(gui, settingsGroup);
+
+	tgui::Button::Ptr exit = createButton("Main Menu", { "30%", "10%" }, { "2.5%", "60%" }, settingsGroup);
+	tgui::Button::Ptr graphing = createButton("Graphing Screen", { "30%", "10%" }, { "2.5%", "70%" }, settingsGroup);
+
+	sensitivity->setMinimum(1);
+	sensitivity->setMaximum(30);
+
+	exit->onClick([this, &gui, settingsGroup]() {
+		settingsGroup->setVisible(false);
+		rendererVisible = false;
+		MainMenuScreen(gui); 
+		});
+
+	graphing->onClick([this, &gui, settingsGroup]() {
+		settingsGroup->setVisible(false);
+		rendererVisible = true;
+		GraphingScreen(gui);
+		});
+
+	sensitivity->onValueChange([this, &gui, sensitivity]() {
+		renderer.controls.sensitivity = sensitivity->getValue()/10; });
+
+	gui.add(settingsGroup);
 }
 
 // Selection menu for the user interface
@@ -69,6 +119,7 @@ void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 	tgui::Button::Ptr createCourse = createButton("Create Course", { "15%", "10%" }, { "22%", "45%" }, selectionMenuGroup);
 	tgui::Button::Ptr Graphing = createButton("Graphing page", { "35%", "10%" }, { "2%", "90%" }, selectionMenuGroup);
 	tgui::ListBox::Ptr ListView = createListView({ "35%", "25%" }, { "2%", "65%" }, selectionMenuGroup);
+	auto MenuBar = createMenuBar(gui, selectionMenuGroup);
 
 	// sets up the callbacks for each button and the list view
 	createCourse->onClick([this, courseSubject, courseName]() 
@@ -84,6 +135,7 @@ void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 		populateList(ListView, databaseInstance); });
 	// changes screen by disabling the current group and enabling the graphing group
 	Graphing->onClick([this, &gui, selectionMenuGroup]() {
+		rendererVisible = true;
 		selectionMenuGroup->setVisible(false);
 		GraphingScreen(gui); });
 
@@ -102,16 +154,16 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 	graphingGroup->add(interactionPanel);
 	// creates all the UI elements with helper functions that I created to tidy the program
 	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "10%" }, graphingGroup);
-	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "30%" }, graphingGroup);
+	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "15%" }, graphingGroup);
 	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "10%" }, graphingGroup);
-	auto listView = createListView({ "20%", "35%" }, { "2%", "60%" }, graphingGroup);
+	auto listView = createListView({ "20%", "50%" }, { "2%", "35%" }, graphingGroup);
 	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "85%" }, graphingGroup);
 
 	auto toolBar = tgui::Panel::create({ "100%", "5%" });
 	graphingGroup->add(toolBar);
-	auto checkBox = createCheckBox({ "2%","3%" }, { "2%", "40%" }, graphingGroup);
+	auto checkBox = createCheckBox({ "2%","3%" }, { "2%", "22%" }, graphingGroup);
 	auto MenuBar = createMenuBar(gui, graphingGroup);
-	auto slider = createSlider({ "20%","3%" }, { "2.5%", "50%" }, graphingGroup);
+	auto slider = createSlider({ "20%","3%" }, { "2.5%", "30%" }, graphingGroup);
 
 	// sets up the colour picker
 	colourPicker = tgui::ColorPicker::create();
@@ -121,6 +173,9 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 	colourPicker->setColor(tgui::Color::Cyan);
 	graphingGroup->add(colourPicker);
 	colourPicker->close();
+
+	// Toggle grid
+	checkBox->onClick([this]() { ToggleGrid(); });
 
 	// sets up the callbacks for each button and the list view
 	listView->onItemSelect([this, listView, editBoxResolution, slider]() {
@@ -196,7 +251,6 @@ tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Lay
 	checkBox->setSize(size);
 	checkBox->setPosition(position);
 	group->add(checkBox);
-	checkBox->onClick([this]() { ToggleGrid(); });
 	return checkBox;
 }
 
@@ -204,12 +258,12 @@ tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Lay
 tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group)
 {
 	auto menuBar = tgui::MenuBar::create();
-	menuBar->setSize({ "20%", "3%" });
-	menuBar->setPosition({ "0%", "0%" });
+	menuBar->setSize({ "100%", "3%" });
+	menuBar->setPosition({ "1%", "1%" });
 
 	menuBar->addMenu("File");
 	menuBar->addMenuItem("File", "Save");
-	menuBar->addMenuItem("File", "Program Info");
+	menuBar->addMenuItem("File", "Main Menu");
 	menuBar->addMenuItem("File", "Exit");
 
 	menuBar->addMenu("Settings");
@@ -229,6 +283,15 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 		group->setVisible(false);
 		ViewSelectionScreen(gui);
 		});
+	menuBar->connectMenuItem("File", "Main Menu", [this, &gui, group]() {
+		group->setVisible(false);
+		rendererVisible = false;
+		MainMenuScreen(gui);
+		});
+	menuBar->connectMenuItem("Settings", "Settings Page", [this, &gui, group]() {
+		group->setVisible(false);
+		SettingsMenuScreen(gui);
+		});
 	group->add(menuBar);
 
 	return menuBar;
@@ -237,10 +300,23 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 
 void UserInterface::Render() 
 {
+	WINDOWINFO wiInfo;
+	GetWindowInfo(window.getSystemHandle(), &wiInfo);
+
+	float width = wiInfo.rcClient.right - wiInfo.rcClient.left;
+	float height = wiInfo.rcClient.bottom - wiInfo.rcClient.top;
+
 	// sets up the projection matrix for the renderer
-	renderer.matProj = renderer.maths.DefineProjectionMatrix(window.getSize().y, window.getSize().x);
-	renderer.OnUserUpdate();
+	renderer.matProj = renderer.maths.DefineProjectionMatrix(height, width);
+
+	if (rendererVisible)
+		renderer.OnUserUpdate(width, height);
+	else
+		window.clear(sf::Color::White);
+
+	// sets the grid visibility and the base colour for the renderer
 	renderer.visibleGrid = gridVisible;
+
 	if (colourPicker != NULL)
 		renderer.baseColour = colourPicker->getColor();
 }
@@ -250,8 +326,7 @@ bool UserInterface::run(tgui::BackendGui& gui) {
 	try
 	{
 		// sets up the theme for the UI, using the incredible UI config by finjosh
-		auto blackTheme = tgui::Theme::create("TGUI-1.5/themes/Dark.txt");
-		blackTheme->setDefault("TGUI-1.5/themes/Dark.txt");
+		ToggleLightMode();
 		MainMenuScreen(gui);
 		return true;
 	}

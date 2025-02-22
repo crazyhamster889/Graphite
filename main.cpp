@@ -10,11 +10,11 @@
 
 using namespace std;
 
-const float ScreenWidth = 1500;
-const float ScreenHeight = 1000;
+const float ScreenWidth = 1100;
+const float ScreenHeight = 800;
 
 sf::ContextSettings settings;
-sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "GRAPHITE", sf::Style::Resize, settings);
+sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "GRAPHITE", sf::Style::Default, settings);
 // Instantiates program components (Composition)
 DatabaseClass database;
 BuildGraph graph(database);
