@@ -46,11 +46,11 @@ public:
 	void ViewSelectionScreen(tgui::BackendGui& gui);
 	void SettingsMenuScreen(tgui::BackendGui& gui);
 	bool run(tgui::BackendGui& gui);
-
+	void HelpScreen(tgui::BackendGui& gui);
 	tgui::Button::Ptr createButton(const std::string& text, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& gui);
 	tgui::EditBox::Ptr createEditBox(const std::string& placeholder, tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
-	tgui::CheckBox::Ptr createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
-	tgui::Slider::Ptr createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
+	tgui::CheckBox::Ptr createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group, string defaultText);
+	tgui::Slider::Ptr createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group, string defaultText);
 	tgui::ListBox::Ptr createListView(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group);
 	tgui::MenuBar::Ptr createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group);
 };

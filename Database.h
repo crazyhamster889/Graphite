@@ -1,7 +1,8 @@
-#include <Vector>
 
-#ifndef DATABASE_H
-#define DATABASE_H
+#pragma once
+
+#include <vector>
+
 class DatabaseClass {
 public:
 	void SetupDatabase();
@@ -15,5 +16,3 @@ public:
 	int PrepareAndExecuteSearch(const char* statement, initializer_list<const char*> params);
 	vector<string> FetchRecentEquations(int userID);
 };
-
-#endif 

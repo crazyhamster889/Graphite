@@ -2,8 +2,6 @@
 #include "Algorithms.h"
 #include "Renderer.h"
 #include <map>
-#include <TGUI/TGUI.hpp>
-#include <TGUI/Backend/SFML-Graphics.hpp>
 
 // Creates the vertex buffer
 sf::VertexArray graph(sf::Triangles);

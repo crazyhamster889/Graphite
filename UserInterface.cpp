@@ -3,7 +3,6 @@
 #include "BuildGraph.h"
 #include <string>
 #include <functional> 
-#include <Windows.h>
 using namespace std;
 
 // UserInterface constructor, sets up the window, the graph, renderer, and the database
@@ -28,6 +27,7 @@ void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPic
 // Creates a graph with the given equation, resolution, slider value, and colour
 void UserInterface::CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
 {
+	graph.gridSize = sliderInput;
 	// ensures the resolution is not 0
 	if (resolutionInput == 0) {
 		MessageBox(NULL, L"No resolution specified", L"Error", MB_OK);
@@ -69,19 +69,22 @@ void UserInterface::MainMenuScreen(tgui::BackendGui& gui)
 	selectGraphs->onClick([this, &gui, menuGroup]() {
 		menuGroup->setVisible(false);
 		ViewSelectionScreen(gui); });
+	help->onClick([this, &gui, menuGroup]() {
+		menuGroup->setVisible(false);
+		HelpScreen(gui); });
 }
 
 void UserInterface::SettingsMenuScreen(tgui::BackendGui& gui)
 {
 	auto settingsGroup = tgui::Group::create();
-	auto switchTheme = createCheckBox({ "30%","5%" }, { "2.5%", "25%" }, settingsGroup);
-	switchTheme->onClick([this, &gui]() { ToggleLightMode(); gui.removeAllWidgets(); SettingsMenuScreen(gui); });
-	auto sensitivity = createSlider({ "30%","3%" }, { "2.5%", "40%" }, settingsGroup);
 	auto MenuBar = createMenuBar(gui, settingsGroup);
+	auto switchTheme = createCheckBox({ "3%","5%" }, { "2.5%", "25%" }, settingsGroup, "Toggle Theme");
+	switchTheme->onClick([this, &gui]() { ToggleLightMode(); gui.removeAllWidgets(); SettingsMenuScreen(gui); });
+	auto sensitivity = createSlider({ "25%","3%" }, { "2.5%", "40%" }, settingsGroup, "Sensitivity");
 
-	tgui::Button::Ptr exit = createButton("Main Menu", { "30%", "10%" }, { "2.5%", "60%" }, settingsGroup);
-	tgui::Button::Ptr graphing = createButton("Graphing Screen", { "30%", "10%" }, { "2.5%", "70%" }, settingsGroup);
-
+	tgui::Button::Ptr exit = createButton("Main Menu", { "25%", "10%" }, { "2.5%", "60%" }, settingsGroup);
+	tgui::Button::Ptr graphing = createButton("Graphing Screen", { "25%", "10%" }, { "2.5%", "70%" }, settingsGroup);
+	sensitivity->setValue(10);
 	sensitivity->setMinimum(1);
 	sensitivity->setMaximum(30);
 
@@ -103,23 +106,55 @@ void UserInterface::SettingsMenuScreen(tgui::BackendGui& gui)
 	gui.add(settingsGroup);
 }
 
+void UserInterface::HelpScreen(tgui::BackendGui& gui)
+{
+	auto helpGroup = tgui::Group::create();
+	auto MenuBar = createMenuBar(gui, helpGroup);
+	tgui::TextArea::Ptr information = tgui::TextArea::create();
+	information->setSize({"25%", "50%"});
+	information->setPosition({ "2.5%", "10%" });
+	information->setText("Valid syntax: All fundamental operations + - * /"
+		                 "\n\nLn(X), Sin(X), Cos(X), Tan(X), \n\nATan(X), ACos(X), ASin(X)"
+	                     "\n\nINT(X), ROUND(X), LOG(X), EXP(X), \n\nTanH(X), SinH(X), CosH(X)"
+	                     "\n\nASinH(X), ATanH(X), ACosH(X), \n\nSIGN(X), SQRT(X), ABS(X)");
+	information->setReadOnly(true);
+	helpGroup->add(information);
+
+	tgui::Button::Ptr exit = createButton("Main Menu", { "25%", "10%" }, { "2.5%", "60%" }, helpGroup);
+	tgui::Button::Ptr graphing = createButton("Graphing Screen", { "25%", "10%" }, { "2.5%", "70%" }, helpGroup);
+
+	exit->onClick([this, &gui, helpGroup]() {
+		helpGroup->setVisible(false);
+		rendererVisible = false;
+		MainMenuScreen(gui);
+		});
+
+	graphing->onClick([this, &gui, helpGroup]() {
+		helpGroup->setVisible(false);
+		rendererVisible = true;
+		GraphingScreen(gui);
+		});
+
+	gui.add(helpGroup);
+}
+
 // Selection menu for the user interface
 void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 {
 	auto selectionMenuGroup = tgui::Group::create();
 
 	// creates all the UI elements with helper functions that I created to tidy the program
-	tgui::EditBox::Ptr usernameLogin = createEditBox("Username", { "35%", "5%" }, { "2%", "20%" }, selectionMenuGroup);
-	tgui::EditBox::Ptr passwordLogin = createEditBox("Password", {"35%", "5%"}, {"2%", "30%"}, selectionMenuGroup);
-	tgui::EditBox::Ptr classLogin = createEditBox("Class", {"15%", "5%"}, {"2%", "35%"}, selectionMenuGroup);
-	tgui::EditBox::Ptr courseName = createEditBox("Course", {"15%", "5%"}, { "22%", "35%" }, selectionMenuGroup);
-	tgui::EditBox::Ptr courseSubject = createEditBox("Course Subject", { "15%", "5%" }, { "22%", "40%" }, selectionMenuGroup);
-	tgui::Button::Ptr createClass = createButton("Create Class", { "15%", "10%" }, { "2%", "45%" }, selectionMenuGroup);
-	tgui::Button::Ptr createAccount = createButton("Create Account / Login", { "35%", "10%" }, { "2%", "55%" }, selectionMenuGroup);
-	tgui::Button::Ptr createCourse = createButton("Create Course", { "15%", "10%" }, { "22%", "45%" }, selectionMenuGroup);
-	tgui::Button::Ptr Graphing = createButton("Graphing page", { "35%", "10%" }, { "2%", "90%" }, selectionMenuGroup);
-	tgui::ListBox::Ptr ListView = createListView({ "35%", "25%" }, { "2%", "65%" }, selectionMenuGroup);
 	auto MenuBar = createMenuBar(gui, selectionMenuGroup);
+	tgui::EditBox::Ptr usernameLogin = createEditBox("Username", { "25%", "5%" }, { "2%", "10%" }, selectionMenuGroup);
+	tgui::EditBox::Ptr passwordLogin = createEditBox("Password", {"25%", "5%"}, {"2%", "15%"}, selectionMenuGroup);
+	tgui::EditBox::Ptr classLogin = createEditBox("Class", {"10%", "5%"}, {"2%", "25%"}, selectionMenuGroup);
+	tgui::EditBox::Ptr courseName = createEditBox("Course Name", {"10%", "5%"}, {"17%", "25%"}, selectionMenuGroup);
+	tgui::EditBox::Ptr courseSubject = createEditBox("Course Subject", { "10%", "5%" }, { "17%", "30%" }, selectionMenuGroup);
+	tgui::Button::Ptr createClass = createButton("Create Class", { "10%", "10%" }, { "2%", "35%" }, selectionMenuGroup);
+	tgui::Button::Ptr createCourse = createButton("Create Course", { "10%", "10%" }, { "17%", "35%" }, selectionMenuGroup);
+	tgui::Button::Ptr Graphing = createButton("Graphing page", { "25%", "10%" }, { "2%", "85%" }, selectionMenuGroup);
+	tgui::ListBox::Ptr ListView = createListView({ "25%", "30%" }, { "2%", "55%" }, selectionMenuGroup);
+	tgui::Button::Ptr createAccount = createButton("Create Account / Login", { "25%", "10%" }, { "2%", "45%" }, selectionMenuGroup);
 
 	// sets up the callbacks for each button and the list view
 	createCourse->onClick([this, courseSubject, courseName]() 
@@ -147,23 +182,19 @@ void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 {
 	auto graphingGroup = tgui::Group::create();
-	auto interactionPanel = tgui::Panel::create();
-	interactionPanel->setSize({ "27%", "100%" });
-	interactionPanel->setPosition({ "0%", "0%" });
 
-	graphingGroup->add(interactionPanel);
 	// creates all the UI elements with helper functions that I created to tidy the program
+	auto MenuBar = createMenuBar(gui, graphingGroup);
 	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "10%" }, graphingGroup);
 	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "15%" }, graphingGroup);
 	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "10%" }, graphingGroup);
 	auto listView = createListView({ "20%", "50%" }, { "2%", "35%" }, graphingGroup);
 	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "85%" }, graphingGroup);
 
-	auto toolBar = tgui::Panel::create({ "100%", "5%" });
-	graphingGroup->add(toolBar);
-	auto checkBox = createCheckBox({ "2%","3%" }, { "2%", "22%" }, graphingGroup);
-	auto MenuBar = createMenuBar(gui, graphingGroup);
-	auto slider = createSlider({ "20%","3%" }, { "2.5%", "30%" }, graphingGroup);
+	auto gridToggle = createCheckBox({ "2%","3%" }, { "2%", "22%" }, graphingGroup, "Toggle Grid");
+	auto gridSize = createSlider({ "20%","3%" }, { "2.5%", "30%" }, graphingGroup, "Grid Size");
+
+	gridSize->setValue(6);
 
 	// sets up the colour picker
 	colourPicker = tgui::ColorPicker::create();
@@ -175,22 +206,22 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 	colourPicker->close();
 
 	// Toggle grid
-	checkBox->onClick([this]() { ToggleGrid(); });
+	gridToggle->onClick([this]() { ToggleGrid(); });
 
 	// sets up the callbacks for each button and the list view
-	listView->onItemSelect([this, listView, editBoxResolution, slider]() {
+	listView->onItemSelect([this, listView, editBoxResolution, gridSize]() {
 		CreateGraph(
 			listView->getSelectedItem().toStdString(),
 			editBoxResolution->getText().toFloat(),
-			slider->getValue(),
+			gridSize->getValue(),
 			colourPicker->getColor()
 		); });
 
-	graphButton->onPress([this, editBoxEquation, editBoxResolution, slider]() {
+	graphButton->onPress([this, editBoxEquation, editBoxResolution, gridSize]() {
 		CreateGraph(
 			editBoxEquation->getText().toStdString(),
 			editBoxResolution->getText().toFloat(),
-			slider->getValue(),
+			gridSize->getValue(),
 			colourPicker->getColor()
 		); });
 
@@ -228,12 +259,16 @@ tgui::EditBox::Ptr UserInterface::createEditBox(const std::string& placeholder, 
 	return editBox;
 }
 
-tgui::Slider::Ptr UserInterface::createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+tgui::Slider::Ptr UserInterface::createSlider(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group, string defaultText)
 {
 	auto slider = tgui::Slider::create();
+	auto text = tgui::Label::create(defaultText);
 	slider->setSize(size);
 	slider->setPosition(position);
+	text->setSize(size);
+	text->setPosition({position.x, position.y  - "3%"});
 	group->add(slider);
+	group->add(text);
 	return slider;
 }
 
@@ -245,11 +280,12 @@ tgui::ListBox::Ptr UserInterface::createListView(tgui::Layout2d size, tgui::Layo
 	return listView;
 }
 
-tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group)
+tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Layout2d position, tgui::Group::Ptr& group, string defaultText)
 {
 	auto checkBox = tgui::CheckBox::create();
 	checkBox->setSize(size);
 	checkBox->setPosition(position);
+	checkBox->setText(defaultText);
 	group->add(checkBox);
 	return checkBox;
 }
@@ -257,7 +293,12 @@ tgui::CheckBox::Ptr UserInterface::createCheckBox(tgui::Layout2d size, tgui::Lay
 // sets up menu bar and the callbacks for each menu item
 tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Group::Ptr& group)
 {
+	auto interactionPanel = tgui::Panel::create();
+	interactionPanel->setSize({ "30%", "100%" });
+	interactionPanel->setPosition({ "0%", "0%" });
+
 	auto menuBar = tgui::MenuBar::create();
+	auto toolBar = tgui::Panel::create({ "100%", "5%" });
 	menuBar->setSize({ "100%", "3%" });
 	menuBar->setPosition({ "1%", "1%" });
 
@@ -273,6 +314,7 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 	menuBar->addMenuItem("Login", "Account Page");
 
 	menuBar->addMenu("Help");
+	menuBar->addMenuItem("Help", "Help Page");
 	menuBar->setTextSize(20);
 
 	menuBar->connectMenuItem("File", "Exit", [this, &gui]() {
@@ -292,6 +334,12 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 		group->setVisible(false);
 		SettingsMenuScreen(gui);
 		});
+	menuBar->connectMenuItem("Help", "Help Page", [this, &gui, group]() {
+		group->setVisible(false);
+		HelpScreen(gui);
+		});
+	group->add(interactionPanel);
+	group->add(toolBar);
 	group->add(menuBar);
 
 	return menuBar;

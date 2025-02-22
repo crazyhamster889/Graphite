@@ -1,11 +1,17 @@
-using namespace std;
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
 
+using namespace std;
 #include <iostream>
 #include <sqlite3.h>
 #include "Database.h"
 #include "Algorithms.h"
 #include <string>
 #include <Vector>
+//#include <TGUI/TGUI.hpp>
 
 char* errorMessage = nullptr;
 sqlite3* database;
@@ -119,6 +125,8 @@ void DatabaseClass::InsertIntoCourseTable(const char& courseName, const char& su
     const char* sqlCommand = "INSERT INTO Course_Table (CourseName, Subject) VALUES (?, ?);";
     PrepareAndExecute(sqlCommand, { &courseName, &subject});
     sqlite3_close(database);
+
+    MessageBox(NULL, L"Successfully created course", L"Information", MB_OK);
     return;
 }
 
@@ -130,6 +138,8 @@ void DatabaseClass::InsertIntoClassTable(const char& classCode, const char& cour
     const char* sqlCommand = "INSERT INTO Class_Table (ClassCode, CourseName) VALUES (?, ?);";
     PrepareAndExecute(sqlCommand, { &classCode, &courseName });
     sqlite3_close(database);
+
+    MessageBox(NULL, L"Successfully created class", L"Information", MB_OK);
     return;
 }
 
@@ -148,10 +158,12 @@ int DatabaseClass::InsertIntoUserTable(const char& username, const char& passwor
     "INNER JOIN Course_Table ON Class_Table.CourseName = Course_Table.CourseName "
     "WHERE User_Table.Username = ? AND User_Table.Password = ? AND Class_Table.ClassCode = ?;";
     int id = PrepareAndExecuteSearch(selectSQL, { hashedUsername.data(), hashedPassword.data(), &className});
-    cout << id;
     // returns true if the search failed
-    if (id != -1)
+    if (id != -1) 
+    {
+        MessageBox(NULL, L"Successfully found user", L"Information", MB_OK);
         return id;
+    }
 
 	// If the user didn't exist then insert the user into the User table
     const char* sqlCommand = "INSERT INTO User_Table (ClassCode, Username, Password) VALUES (?, ?, ?);";
@@ -160,6 +172,8 @@ int DatabaseClass::InsertIntoUserTable(const char& username, const char& passwor
         sqlite3_close(database);
         return -1;
     }
+
+    MessageBox(NULL, L"Successfully created user", L"Information", MB_OK);
 
     // Get inserted user ID
     sqlite3_int64 newID = sqlite3_last_insert_rowid(database);
