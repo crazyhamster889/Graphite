@@ -25,14 +25,23 @@ Utils::mat4x4 Utils::DefineProjectionMatrix(float ScreenHeight, float ScreenWidt
 	* It's one of the most fundamental components of this project.
 	* It's fully explained in my design document.
 	*/
+
 	Utils::mat4x4 projectionMatrix;
+
+	if (ScreenHeight == 0 || ScreenWidth == 0)
+	{
+	//	cout << "Error: Screen height or width has been set to 0" << endl;
+		return projectionMatrix;
+	}
 
 	float nearPlane = 10.0f;
 	float farPlane = 100.0f;
 	float fov = 40.0f;
 	float aspectRatio = (float)ScreenHeight / (float)ScreenWidth;
+	// perform trignometric calulations to calulate the field of view
 	float fovRad = 1.0f / tanf(fov * 0.5f / 180 * 3.14159f);
 
+	// assign matrix elements
 	projectionMatrix.m[0][0] = aspectRatio * fovRad;
 	projectionMatrix.m[1][1] = fovRad;
 	projectionMatrix.m[2][2] = farPlane / (farPlane - nearPlane);
@@ -82,7 +91,7 @@ Utils::mat4x4 Utils::MultiplyMatrix(mat4x4& i, mat4x4& o)
 	return input;
 }
 
-Utils::mat4x4 Utils::matRotZ(float zRot)
+Utils::mat4x4 Utils::MatRotationZ(float zRot)
 {
 	mat4x4 matRotZResult;
 
@@ -106,7 +115,7 @@ Utils::mat4x4 Utils::matRotZ(float zRot)
 	matRotZResult.m[3][3] = 1;
 	return matRotZResult;
 }
-Utils::mat4x4 Utils::matRotY(float yRot)
+Utils::mat4x4 Utils::MatRotationY(float yRot)
 {
 	mat4x4 matRotYResult;
 
@@ -127,7 +136,7 @@ Utils::mat4x4 Utils::matRotY(float yRot)
 	matRotYResult.m[3][3] = 1;
 	return matRotYResult;
 } 
-Utils::mat4x4 Utils::matRotX(float xRot)
+Utils::mat4x4 Utils::MatRotationX(float xRot)
 {
 	mat4x4 matRotXResult;
 

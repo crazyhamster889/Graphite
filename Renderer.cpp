@@ -37,9 +37,9 @@ void Renderer::OnUserUpdate(float width, float height)
 	MatRotY: Allows the user to rotate around the y axis
 	MatRotZ: Currently isn't used, may be useful if client needs a third way of panning around the object
 	*/
-	matRotX = maths.matRotX(controls.xRot);
-	matRotY = maths.matRotY(controls.yRot);
-	matRotZ = maths.matRotZ(0);
+	matRotX = maths.MatRotationX(controls.xRot);
+	matRotY = maths.MatRotationY(controls.yRot);
+	matRotZ = maths.MatRotationZ(0);
 
 
 	/* 

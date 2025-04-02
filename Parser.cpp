@@ -86,45 +86,76 @@ void parser::VariableAssignment(double& result)
 // Add or subtract two terms.
 void parser::EvaluateAddition(double& result)
 {
-	register char operation;
-	double partialResult;
+	// create the value stack and the operation stack
+	stack<char> operationStack;
+	stack<double> valueStack;
+	valueStack.push(0);
 	EvaluateMultiplication(result);
-	while ((operation = *token) == '+' || operation == '-')
+	valueStack.top() = result;
+
+	// use stacks to push tokens onto the operation stack
+	// and push the result of any multiplication onto the value stack
+	while (*token == '+' || *token == '-')
 	{
+		char operation = *token;
+		operationStack.push(operation);
 		RegisterToken();
-		EvaluateMultiplication(partialResult);
-		switch (operation)
-		{
-		case '-':
-			result = result - partialResult;
-			break;
-		case '+':
-			result = result + partialResult;
-			break;
-		}
+		EvaluateMultiplication(result);
+		valueStack.push(result);
 	}
+	// use stacks to pop tokens onto from the operations stack
+	// use stacks to pop the left and right results and then apply the operator
+	while (!operationStack.empty()) {
+		double right = valueStack.top(); 
+		valueStack.pop();
+		double left = valueStack.top(); 
+		valueStack.pop();
+		char operation = operationStack.top(); 
+		operationStack.pop();
+
+		if (operation == '+')
+			left += right;
+		else 
+			left -= right;
+
+		valueStack.push(left);
+	}
+	// get the result of the calculations
+	result = valueStack.top();
 }
 // Multiply or divide two factors.
 void parser::EvaluateMultiplication(double& result)
 {
-	register char operation;
-	double partialResult;
+	stack<char> operationStack;
+	stack<double> valueStack;
+	valueStack.push(0);
 	ExponentEvaluation(result);
-	while ((operation = *token) == '*' || operation == '/')
-	{
-		RegisterToken();
-		ExponentEvaluation(partialResult);
+	valueStack.top() = result;
 
-		switch (operation)
-		{
-		case '*':
-			result = result * partialResult;
-			break;
-		case '/':
-			result = result / partialResult;
-			break;
-		}
+	while (*token == '*' || *token == '/')
+	{
+		char operation = *token;
+		operationStack.push(operation);
+		RegisterToken();
+		ExponentEvaluation(result);
+		valueStack.push(result);
 	}
+	while (!operationStack.empty()) {
+		double right = valueStack.top();
+		valueStack.pop();
+		double left = valueStack.top();
+		valueStack.pop();
+		char operation = operationStack.top();
+		operationStack.pop();
+
+		if (operation == '*')
+			left *= right;
+		else
+			left /= right;
+
+		valueStack.push(left);
+	}
+	result = valueStack.top();
 }
 // Process an exponent.
 void parser::ExponentEvaluation(double& result)
@@ -155,54 +186,54 @@ void parser::UnaryEvaluation(double& result)
 
 // Evaluate a function
 void parser::EvaluateFunction(double& result) {
-	bool isfunction = (tokenIdentifier == FUNCTION);
-	string tempToken = token;
+    bool isfunction = (tokenIdentifier == FUNCTION);
+    string tempToken = token;
 
-	if (isfunction) {
-		RegisterToken();
-	}
+    if (isfunction) {
+        RegisterToken();
+    }
 
-	if (*token == '(') {
-		RegisterToken();
-		EvaluateAddition(result);
+    if (*token == '(') {
+        RegisterToken();
+        EvaluateAddition(result);
 
-		if (isfunction) {
-			// shortcut for mapping strings to program functions
-			static const map<string, function<double(double)>> functionMap = {
-				{"SIN",   [](double x) { return Algorithms::SinExpansion(x, 5); }},
-				{"COS",   [](double x) { return Algorithms::CosExpansion(x, 5); }},
-				{"TAN",   [](double x) { return Algorithms::SinExpansion(x, 5) / Algorithms::CosExpansion(x, 5); }},
-				{"ASIN",  [](double x) { return asin(x); }}, {"INT",   [](double x) { return floor(x); }},
-				{"ACOS",  [](double x) { return acos(x); }}, {"ATAN",  [](double x) { return atan(x); }},
-				{"SINH",  [](double x) { return sinh(x); }}, {"COSH",  [](double x) { return cosh(x); }},
-				{"TANH",  [](double x) { return tanh(x); }}, {"ASINH", [](double x) { return asinh(x); }},
-				{"ACOSH", [](double x) { return acosh(x); }}, {"ATANH", [](double x) { return atanh(x); }},
-				{"SIGN",  [](double x) { return (x > 0) ? 1 : ((x < 0) ? -1 : 0); }}, {"LN",    [](double x) { return log(x); }},
-				{"LOG",   [](double x) { return log10(x); }}, {"EXP",   [](double x) { return exp(x); }},
-				{"SQRT",  [](double x) { return sqrt(x); }},{"ABS",   [](double x) { return abs(x); }},
-				{"SQR",   [](double x) { return x * x; }}, {"ROUND", [](double x) { return round(x); }}
-			};
+        if (isfunction) {
+            // shortcut for mapping strings to program functions
+            const map<string, function<double(double)>> functionMap = {
+                {"SIN",   [](double x) { Algorithms algorithms; return algorithms.SinExpansion(x, 5); }},
+                {"COS",   [](double x) { Algorithms algorithms; return algorithms.CosExpansion(x, 5); }},
+                {"TAN",   [](double x) { Algorithms algorithms; return algorithms.SinExpansion(x, 5) / algorithms.CosExpansion(x, 5); }},
+                {"ASIN",  [](double x) { return asin(x); }}, {"INT",   [](double x) { return floor(x); }},
+                {"ACOS",  [](double x) { return acos(x); }}, {"ATAN",  [](double x) { return atan(x); }},
+                {"SINH",  [](double x) { return sinh(x); }}, {"COSH",  [](double x) { return cosh(x); }},
+                {"TANH",  [](double x) { return tanh(x); }}, {"ASINH", [](double x) { return asinh(x); }},
+                {"ACOSH", [](double x) { return acosh(x); }}, {"ATANH", [](double x) { return atanh(x); }},
+                {"SIGN",  [](double x) { return (x > 0) ? 1 : ((x < 0) ? -1 : 0); }}, {"LN",    [](double x) { return log(x); }},
+                {"LOG",   [](double x) { return log10(x); }}, {"EXP",   [](double x) { return exp(x); }},
+                {"SQRT",  [](double x) { return sqrt(x); }},{"ABS",   [](double x) { return abs(x); }},
+                {"SQR",   [](double x) { return x * x; }}, {"ROUND", [](double x) { return round(x); }}
+            };
 
-			auto it = functionMap.find(tempToken);
-			if (it != functionMap.end()) {
-				result = it->second(result);
-			}
-		}
-		RegisterToken();
-	}
-	else {
-		switch (tokenIdentifier) {
-		case VARIABLE:
-			result = vars[*token - 'A'];
-			break;
-		case NUMBER:
-			result = std::stod(token);
-			break;
-		default:
-			return;
-		}
-		RegisterToken();
-	}
+            auto it = functionMap.find(tempToken);
+            if (it != functionMap.end()) {
+                result = it->second(result);
+            }
+        }
+        RegisterToken();
+    }
+    else {
+        switch (tokenIdentifier) {
+        case VARIABLE:
+            result = vars[*token - 'A'];
+            break;
+        case NUMBER:
+            result = std::stod(token);
+            break;
+        default:
+            return;
+        }
+        RegisterToken();
+    }
 }
 
 // Obtain the next token.

@@ -17,15 +17,15 @@ void UserInterface::ToggleLightMode()
 	themeEnabled = !themeEnabled;
 	cout << themeEnabled;
 	if (themeEnabled)
-		Theme->setDefault("TGUI-1.5/themes/Dark.txt");
+		theme->setDefault("Dark.txt");
 	else 
-		Theme->setDefault("TGUI-1.5/themes/Light.txt");
+		theme->setDefault("Light.txt");
 }
 // Toggles the colour picker visibility
 void UserInterface::ToggleClourPicker(tgui::BackendGui& gui) { gui.add(colourPicker); }
 
 // Creates a graph with the given equation, resolution, slider value, and colour
-void UserInterface::CreateGraph(string equationInput, float resolutionInput, float sliderInput, tgui::Color color)
+void UserInterface::CreateGraph(string equationInput, string equationDescription, float resolutionInput, float sliderInput, tgui::Color color)
 {
 	graph.gridSize = sliderInput;
 	// ensures the resolution is not 0
@@ -33,10 +33,26 @@ void UserInterface::CreateGraph(string equationInput, float resolutionInput, flo
 		MessageBox(NULL, L"No resolution specified", L"Error", MB_OK);
 		return;
 	}
+
+	// SQL injection string
+	regex sqlRegex(R"(--|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b|\bALTER\b|\bCREATE\b|\bEXEC\b|\bXP_\b|['";])", regex_constants::icase);
+
+	// SQL injection equation
+	if (regex_search(equationInput, sqlRegex)) {
+		MessageBox(NULL, L"Invalid equation SQL injection detected", L"Error", MB_OK);
+		return;
+	}
+
+	// SQL injection description
+	if (regex_search(equationDescription, sqlRegex)) {
+		MessageBox(NULL, L"Invalid description SQL injection detected", L"Error", MB_OK);
+		return;
+	}
+
 	// equation format validation
 	std::regex invalidPattern(R"([^0-9+\-*/^().a-zA-Z\s])");
 	if (equationInput.empty() != 1  && !regex_search(equationInput, invalidPattern))
-		graph.OnUserCreate(equationInput, resolutionInput, userID);
+		graph.OnUserCreate(equationInput, equationDescription, resolutionInput, userID);
 	else
 		MessageBox(NULL, L"Invalid Equation", L"Error", MB_OK);
 
@@ -155,19 +171,46 @@ void UserInterface::ViewSelectionScreen(tgui::BackendGui& gui)
 	tgui::Button::Ptr Graphing = createButton("Graphing page", { "25%", "10%" }, { "2%", "85%" }, selectionMenuGroup);
 	tgui::ListBox::Ptr ListView = createListView({ "25%", "30%" }, { "2%", "55%" }, selectionMenuGroup);
 	tgui::Button::Ptr createAccount = createButton("Create Account / Login", { "25%", "10%" }, { "2%", "45%" }, selectionMenuGroup);
+	tgui::EditBox::Ptr favouriteNumberInput = createEditBox("Favourite number", { "25%", "5%" }, { "2%", "20%" }, selectionMenuGroup);
+
+	// SQL injection string
+	regex sqlRegex(R"(--|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b|\bALTER\b|\bCREATE\b|\bEXEC\b|\bXP_\b|['";])", regex_constants::icase);
 
 	// sets up the callbacks for each button and the list view
-	createCourse->onClick([this, courseSubject, courseName]() 
-	{databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());});
-	createClass->onClick([this, classLogin, courseName]() 
-	{databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data()); });
-	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin]()
+	createCourse->onClick([this, courseSubject, courseName, sqlRegex]()
 	{
-		userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(), 
-													  *passwordLogin->getText().toStdString().data(),
-													  *classLogin->getText().toStdString().data());
-		ListView->removeAllItems();
-		populateList(ListView, databaseInstance); });
+		if (!(regex_search(courseName->getText().toStdString(), sqlRegex) || regex_search(courseSubject->getText().toStdString(), sqlRegex))) {
+
+			databaseInstance.InsertIntoCourseTable(*courseName->getText().toStdString().data(), *courseSubject->getText().toStdString().data());
+		}
+		else {
+			MessageBox(NULL, L"SQL injection detected", L"Error", MB_OK);
+		}
+	}
+	);
+	createClass->onClick([this, classLogin, courseName, sqlRegex]() 
+	{
+		if (!(regex_search(courseName->getText().toStdString(), sqlRegex) || regex_search(classLogin->getText().toStdString(), sqlRegex))) {
+			databaseInstance.InsertIntoClassTable(*classLogin->getText().toStdString().data(), *courseName->getText().toStdString().data());
+		}
+		else {
+			MessageBox(NULL, L"SQL injection detected", L"Error", MB_OK);
+		}
+	});
+	createAccount->onClick([this, usernameLogin, passwordLogin, ListView, courseName, classLogin, sqlRegex, favouriteNumberInput]()
+	{
+		if (!(regex_search(usernameLogin->getText().toStdString(), sqlRegex) || regex_search(passwordLogin->getText().toStdString(), sqlRegex))) {
+			userID = databaseInstance.InsertIntoUserTable(*usernameLogin->getText().toStdString().data(),
+				*passwordLogin->getText().toStdString().data(),
+				*classLogin->getText().toStdString().data(), std::stoi(favouriteNumberInput->getText().toStdString()));
+			ListView->removeAllItems();
+			populateList(ListView, databaseInstance);
+		}
+		else {
+			MessageBox(NULL, L"SQL injection detected", L"Error", MB_OK);
+		}
+	});
+
 	// changes screen by disabling the current group and enabling the graphing group
 	Graphing->onClick([this, &gui, selectionMenuGroup]() {
 		rendererVisible = true;
@@ -184,16 +227,19 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 	auto graphingGroup = tgui::Group::create();
 
 	// creates all the UI elements with helper functions that I created to tidy the program
-	auto MenuBar = createMenuBar(gui, graphingGroup);
-	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "10%" }, graphingGroup);
-	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "15%" }, graphingGroup);
-	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "10%" }, graphingGroup);
-	auto listView = createListView({ "20%", "50%" }, { "2%", "35%" }, graphingGroup);
-	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "85%" }, graphingGroup);
+	tgui::MenuBar::Ptr menuBar = createMenuBar(gui, graphingGroup);
+	tgui::EditBox::Ptr editBoxEquation = createEditBox("Equation", { "20%", "5%" }, { "2%", "7%" }, graphingGroup);
+	tgui::EditBox::Ptr editBoxResolution = createEditBox("Resolution", { "20%", "5%" }, { "2%", "12%" }, graphingGroup);
+	tgui::EditBox::Ptr editBoxDescription = createEditBox("Description", { "20%", "5%" }, { "2%", "17%" }, graphingGroup);
+	tgui::Button::Ptr colourPickerButton = createButton("ƒ", { "3%", "5%" }, { "22%", "12%" }, graphingGroup);
+	auto listView = createListView({ "20%", "50%" }, { "2%", "37%" }, graphingGroup);
+	tgui::Button::Ptr graphButton = createButton("Graph", { "20%", "10%" }, { "2%", "87%" }, graphingGroup);
+	editBoxResolution->setText("0.2");
 
-	auto gridToggle = createCheckBox({ "2%","3%" }, { "2%", "22%" }, graphingGroup, "Toggle Grid");
-	auto gridSize = createSlider({ "20%","3%" }, { "2.5%", "30%" }, graphingGroup, "Grid Size");
+	auto gridToggle = createCheckBox({ "2%","3%" }, { "2%", "24%" }, graphingGroup, "Toggle Grid");
+	tgui::Slider::Ptr gridSize = createSlider({ "20%","3%" }, { "2.5%", "32%" }, graphingGroup, "Grid Size");
 
+	gridSize->setMinimum(1);
 	gridSize->setValue(6);
 
 	// sets up the colour picker
@@ -209,21 +255,41 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 	gridToggle->onClick([this]() { ToggleGrid(); });
 
 	// sets up the callbacks for each button and the list view
-	listView->onItemSelect([this, listView, editBoxResolution, gridSize]() {
+	listView->onItemSelect([this, listView, editBoxResolution, editBoxDescription, gridSize]() {
 		CreateGraph(
 			listView->getSelectedItem().toStdString(),
+			editBoxDescription->getText().toStdString(),
 			editBoxResolution->getText().toFloat(),
 			gridSize->getValue(),
 			colourPicker->getColor()
 		); });
 
-	graphButton->onPress([this, editBoxEquation, editBoxResolution, gridSize]() {
+	graphButton->onPress([this, editBoxEquation, editBoxResolution, editBoxDescription, gridSize, listView]() {
 		CreateGraph(
 			editBoxEquation->getText().toStdString(),
+			editBoxDescription->getText().toStdString(),
 			editBoxResolution->getText().toFloat(),
 			gridSize->getValue(),
 			colourPicker->getColor()
-		); });
+		);
+		populateList(listView, databaseInstance);
+		});
+
+	regex sqlRegex(R"(--|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b|\bALTER\b|\bCREATE\b|\bEXEC\b|\bXP_\b|['";])", regex_constants::icase);
+	menuBar->connectMenuItem("File", "Save", [this, &gui, listView, graphingGroup, sqlRegex, editBoxEquation]()
+	{
+		if (editBoxEquation->getText().toStdString().empty() != true) {
+			if (!(regex_search(editBoxEquation->getText().toStdString(), sqlRegex)))
+			{
+				MessageBox(NULL, L"Successfully saved equation", L"Error", MB_OK);
+				databaseInstance.InsertIntoEquationTable(*"Saved equation", *editBoxEquation->getText().toStdString().data(), *to_string(userID).c_str());
+				populateList(listView, databaseInstance);
+			}
+			else {
+				MessageBox(NULL, L"SQL injection detected", L"Error", MB_OK);
+			}
+		}
+	});
 
 	// populates the list view with the equations 
 	populateList(listView, databaseInstance);
@@ -234,6 +300,7 @@ void UserInterface::GraphingScreen(tgui::BackendGui& gui)
 
 // helper functions
 void UserInterface::populateList(tgui::ListBox::Ptr listView, DatabaseClass databaseInstance) {
+	listView->removeAllItems();
 	for (string item : databaseInstance.FetchRecentEquations(userID))
 	{
 		listView->addItem(item);
@@ -338,6 +405,7 @@ tgui::MenuBar::Ptr UserInterface::createMenuBar(tgui::BackendGui& gui, tgui::Gro
 		group->setVisible(false);
 		HelpScreen(gui);
 		});
+
 	group->add(interactionPanel);
 	group->add(toolBar);
 	group->add(menuBar);
@@ -369,7 +437,7 @@ void UserInterface::Render()
 		renderer.baseColour = colourPicker->getColor();
 }
 
-bool UserInterface::run(tgui::BackendGui& gui) {
+bool UserInterface::Run(tgui::BackendGui& gui) {
 	// Try and catch to handle any errors when setting up the UI
 	try
 	{

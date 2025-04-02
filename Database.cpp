@@ -11,7 +11,6 @@ using namespace std;
 #include "Algorithms.h"
 #include <string>
 #include <Vector>
-//#include <TGUI/TGUI.hpp>
 
 char* errorMessage = nullptr;
 sqlite3* database;
@@ -23,6 +22,10 @@ bool DatabaseClass::OpenDatabase() {
         // throws an error if the database can't be opened
         cerr << "Can't open database: " << sqlite3_errmsg(database) << endl;
         return false;
+    }
+    else
+    {
+        cout << "Successfully opened database" << endl;
     }
     return true;
 }
@@ -85,35 +88,38 @@ void DatabaseClass::SetupDatabase() {
     const char* createStatements[] = {
         "CREATE TABLE IF NOT EXISTS Equation_Table ("
         "EquationID INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "UserID INTEGER, EquationName TEXT NOT NULL, Equation TEXT NOT NULL);",
+        "UserID INTEGER, EquationDescription TEXT NOT NULL, Equation TEXT NOT NULL UNIQUE);",
 
         "CREATE TABLE IF NOT EXISTS User_Table ("
         "UserID INTEGER PRIMARY KEY AUTOINCREMENT, "
         "ClassCode TEXT NOT NULL, Username TEXT NOT NULL, Password TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS Course_Table ("
-        "CourseName TEXT PRIMARY KEY NOT NULL, Subject TEXT NOT NULL);",
+        "CourseID INTEGER AUTOINCREMENT, "
+        "CourseName TEXT PRIMARY KEY NOT NULL UNIQUE, Subject TEXT NOT NULL);",
 
         "CREATE TABLE IF NOT EXISTS Class_Table ("
-        "ClassCode TEXT PRIMARY KEY NOT NULL, CourseName TEXT NOT NULL);"
+        "ClassID INTEGER PRIMARY KEY AUTOINCREMENT"
+        "ClassCode TEXT NOT NULL, CourseName TEXT NOT NULL UNIQUE);"
     };
 
 	// Iterates through the createStatements array and executes the SQL
-    for (const char* statement : createStatements)
+    for (const char* statement : createStatements) {
         ExecuteSQL(statement);
+    }
 
     sqlite3_close(database);
     return;
 }
 
 // Insert into the equation table
-void DatabaseClass::InsertIntoEquationTable(const char& EquationName, const char& Equation, const char& ID)
+void DatabaseClass::InsertIntoEquationTable(const char& EquationDescription, const char& Equation, const char& ID)
 {
     if (!OpenDatabase())
         return;
 
-    const char* sqlCommand = "INSERT INTO Equation_Table (EquationName, Equation, UserID) VALUES (?, ?, ?);";
-    PrepareAndExecute(sqlCommand, { &EquationName, &Equation, &ID});
+    const char* sqlCommand = "INSERT INTO Equation_Table (EquationDescription, Equation, UserID) VALUES (?, ?, ?);";
+    PrepareAndExecute(sqlCommand, { &EquationDescription, &Equation, &ID});
     sqlite3_close(database);
     return;
 }
@@ -144,20 +150,23 @@ void DatabaseClass::InsertIntoClassTable(const char& classCode, const char& cour
 }
 
 // Insert into the User table
-int DatabaseClass::InsertIntoUserTable(const char& username, const char& password, const char& className)
+int DatabaseClass::InsertIntoUserTable(const char& username, const char& password, const char& className, int favouriteNumber)
 {
     if (!OpenDatabase()) return -1;
 
     Algorithms algorithms;
-    string hashedUsername = algorithms.Hash(&username);
-    string hashedPassword = algorithms.Hash(&password);
+    string strClassName = &className;
+    string hashedUsername = algorithms.Hash(&username, favouriteNumber);
+    string hashedPassword = algorithms.Hash(&password, favouriteNumber);
 
 	// Using joins to join the Class table and the Course table when for data in the User class
     const char* selectSQL =  "SELECT * FROM User_Table "
     "INNER JOIN Class_Table ON User_Table.ClassCode = Class_Table.ClassCode "
     "INNER JOIN Course_Table ON Class_Table.CourseName = Course_Table.CourseName "
     "WHERE User_Table.Username = ? AND User_Table.Password = ? AND Class_Table.ClassCode = ?;";
-    int id = PrepareAndExecuteSearch(selectSQL, { hashedUsername.data(), hashedPassword.data(), &className});
+    cout << strClassName << endl;
+
+    int id = PrepareAndExecuteSearch(selectSQL, { hashedUsername.data(), hashedPassword.data(), strClassName.data()});
     // returns true if the search failed
     if (id != -1) 
     {
@@ -205,7 +214,7 @@ vector<string> DatabaseClass::FetchRecentEquations(int userID)
 	// Fetch the equations
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int id = sqlite3_column_int(stmt, 0);
-        const char* contents = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        const char* contents = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
 
         string str(contents);
         foundEquations.push_back(str);

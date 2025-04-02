@@ -53,20 +53,20 @@ void BuildGraph::GridBuilder()
 	}
 }
 
-void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int ID)
+void BuildGraph::OnUserCreate(string equationInput, string equationDescription, float resolutionInput, int ID)
 {
 	sqlite3_stmt* stmt = NULL;
+	if (resolutionInput < 0.1f) 
+		MessageBox(NULL, L"Resolution too low, defaulted to 0.1", L"Error", MB_OK);
+	
+	resolutionInput = max(0.1f, resolutionInput);
+	bool isGraphBounded = false;
 
 	for (int i = 0; i <= (end(meshes) - begin(meshes)) - 1; i++)
 		meshes[i].tris.clear();
 
 	string equation = equationInput;
-
-	cout << ID;
-	cout << to_string(ID);
-	cout << *to_string(ID).c_str();
-
-	database.InsertIntoEquationTable(*equation.data(), *equation.data(), *to_string(ID).c_str());
+	database.InsertIntoEquationTable(*equationDescription.data(), *equation.data(), *to_string(ID).c_str());
 	// instantiate the equation parser and algorithms class (Composition)
 	parser ob;
 	Algorithms algorithms;
@@ -100,6 +100,7 @@ void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int I
 			// if any of the grid vertices are within the grid volume then we allow the face to be rendered 
 			if (any_of(zValues.begin(), zValues.end(), [&](float z) { return z > -gridSize && z < gridSize; })) 
 			{
+				isGraphBounded = true;
 				// but we becausee we're allowing the face to render if at least one of the vertices are within the volume
 				// we need to clamp the values to the grid volume
 				for_each(zValues.begin(), zValues.end(), [&](float& z) { z = std::clamp(z, -gridSize, gridSize); });
@@ -111,6 +112,10 @@ void BuildGraph::OnUserCreate(string equationInput, float resolutionInput, int I
 					{ x + resolutionInput / 2.0f, zValues[3], y + resolutionInput / 2.0f }, 0, sf::Color::White);
 			}
 		}
+	}
+
+	if (isGraphBounded == false) {
+		MessageBox(NULL, L"Graph is not bounded", L"Error", MB_OK);
 	}
 
 	// create the grid

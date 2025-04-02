@@ -14,7 +14,7 @@ const float ScreenWidth = 1100;
 const float ScreenHeight = 800;
 
 sf::ContextSettings settings;
-sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "GRAPHITE", sf::Style::Default, settings);
+sf::RenderWindow window(sf::VideoMode(ScreenWidth, ScreenHeight), "GRAPHITe", sf::Style::Default, settings);
 // Instantiates program components (Composition)
 DatabaseClass database;
 BuildGraph graph(database);
@@ -29,7 +29,7 @@ int main()
 
 	// Run GUI setup
 	tgui::Gui gui{ window };
-	UI.run(gui);
+	UI.Run(gui);
 
 	// Sets up the database
 	database.SetupDatabase();

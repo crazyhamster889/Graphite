@@ -14,16 +14,16 @@ public:
 	float xRot = 0.0f;
 	float yRot = 0.0f;
 
+	float sensitivity = 5;
+	void DefineCameraPosition();
+private:
 	float xInitial = 0.0f;
 	float yInitial = 0.0f;
 
 	float xRotInitial = 0.0f;
 	float yRotInitial = 0.0f;
 
-	float sensitivity = 5;
 	bool InitialClick = false;
-
-	void DefineCameraPosition();
 };
 
 #endif 

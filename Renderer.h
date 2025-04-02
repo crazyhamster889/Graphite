@@ -10,22 +10,19 @@ using namespace std;
 
 class Renderer
 {
-	bool WithinScreenLimits(Utils::triangle triangle);
+	public:
+		void OnUserUpdate(float width, float height);
+		Renderer(sf::RenderWindow& targetWindow, BuildGraph& targetGraph) : window(targetWindow), graphConstructor(targetGraph) {}
+		BuildGraph graphConstructor;
+		CameraControls controls;
+		Utils maths;
+		Utils::mat4x4 matProj;
+		tgui::Color baseColour;
+		bool visibleGrid = false;
 
-public:
-
-	Renderer(sf::RenderWindow& targetWindow, BuildGraph& targetGraph) : window(targetWindow), graphConstructor(targetGraph) {}
-
-	Utils::mat4x4 matProj;
-	BuildGraph graphConstructor;
-	CameraControls controls;
-	Utils maths;
-
-	bool visibleGrid = false;
-	tgui::Color baseColour;
-
-	sf::RenderWindow& window;
-	void OnUserUpdate(float width, float height);
+	private:
+		bool WithinScreenLimits(Utils::triangle triangle);
+		sf::RenderWindow& window;
 };
 
 #endif 

@@ -29,14 +29,19 @@ string Algorithms::replaceAll(const string& inputText, const string& from, const
 }
 
 // Custom hashing algorithm
-string Algorithms::Hash(const string& input)
+string Algorithms::Hash(const string& input, int favouriteNumber)
 {
-	int salt = 362897;
+	int salt = 362897 + favouriteNumber;
 	int secretKey = sqrt(8741);
 	int hashValue = salt;
 
 	list<char> hashingOutput = list<char>();
 	string hash = input;
+
+	// Ensures the isn't zero length
+	if (hash.length() <= 0)
+		return "";
+
 	// Ensures all hashes are the same length
 	while (hash.length() < 32) {
 		hash += input[input.length() % input.size()];
@@ -61,42 +66,50 @@ string Algorithms::Hash(const string& input)
 
 	return output;
 }
-// Taylor series expansion for Sin used to improve performance 
-float Algorithms::SinExpansion(double num, double precision)
+// Maclaurin series expansion for Sin used to improve performance 
+float Algorithms::SinExpansion(double number, double precision)
 {
 	float value = 0;
-
-	num = remainder(num + 3.14159f, 2 * 3.14159f);
+	// Ensures the number is within the range of 0 to 2pi, using modular arithmetic
+	number = remainder(number + 3.14159f, 2 * 3.14159f);
+	Utils mathsHelper;
 
 	for (int n = 0; n < precision; n++) {
-		value += pow(-1.0, n) * pow(num, 2 * n + 1) / Utils::factorial(2 * n + 1);
+		// itterative formula for the Maclaurin series expansion of sin (((-1)^n)*x^(2n + 1))/(2n + 1)!
+		value += pow(-1.0, n) * pow(number, 2 * n + 1) / mathsHelper.factorial(2 * n + 1);
 	}
 	return value;
 }
-// Taylor series expansion for Cos used to improve performance 
+// Maclaurin series expansion for Cos used to improve performance 
 float Algorithms::CosExpansion(double number, double precision)
 {
 	float value = 0;
 
+	// Ensures the number is within the range of 0 to 2pi, using modular arithmetic
 	number = remainder(number + 3.14159f, 2 * 3.14159f);
+	Utils mathsHelper;
 
 	for (int n = 0; n < precision; n++) {
-		value += pow(-1.0, n) * pow(number, 2 * n) / Utils::factorial(2 * n);
+		// itterative formula for the Maclaurin series expansion of cos (((-1)^n)*x^(2n))/(2n)!
+		value += pow(-1.0, n) * pow(number, 2 * n) / mathsHelper.factorial(2 * n);
 	}
 	return value;
 }
 
-// No Taylor series expansion for Tan because it's better to divide the output of the Sin expansion with the Cos expansion
+// No Maclaurin series expansion for Tan because it's better to divide the output of the Sin expansion with the Cos expansion
 
 // returns the average distance from the camera based on the 3 vertices in the triangle
 float Algorithms::AverageZ(const Utils::triangle& triangle) {
-	return (triangle.p[0].z + triangle.p[1].z + triangle.p[2].z) / 3.0f;
+	float value = (triangle.p[0].z + triangle.p[1].z + triangle.p[2].z) / 3.0f;
+	if (value <= 0)
+		return 0;
+
+	return value;
 }
 // compares the depth of two given triangles
 bool Algorithms::CompareTriangles(const Utils::triangle& t1, const Utils::triangle& t2) {
 	return AverageZ(t1) > AverageZ(t2);
 }
-// Merge algorithm used for the merge sort 
 void Algorithms::Merge(vector<Utils::triangle>& triangles, int leftBound, int half, int rightBound) {
 	// Get the sizes of the two lists
 	int leftHalfSize = half - leftBound + 1;
@@ -134,14 +147,13 @@ void Algorithms::Merge(vector<Utils::triangle>& triangles, int leftBound, int ha
 		mergePointer++;
 	}
 }
-// This is a parallelized algorithm for a merge sort, it's a complex recursive algorithm   
 void Algorithms::ParallelMergeSort(vector < Utils::triangle >& triangles, int leftPointer, int rightPointer, int depth) {
 	if (leftPointer < rightPointer) {
 		int mid = leftPointer + (rightPointer - leftPointer) / 2;
 		// Checks if the depth is less than the log base 2 of the number of threads, if so it will create a new thread
 		// This improves the performance of the merge sort because it's running on multiple threads
 		if (depth < log2(thread::hardware_concurrency())) {
-			auto leftFuture = async(launch::async, &Algorithms::ParallelMergeSort, ref(triangles), leftPointer, mid, depth + 1);
+			auto leftFuture = async(launch::async, &Algorithms::ParallelMergeSort, this, ref(triangles), leftPointer, mid, depth + 1);
 			ParallelMergeSort(triangles, mid + 1, rightPointer, depth + 1);
 			leftFuture.get(); 
 		}

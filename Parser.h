@@ -15,6 +15,7 @@ enum types { DELIMITER = 1, VARIABLE, NUMBER, FUNCTION };
 const int NUMVARS = 26;
 
 class parser {
+private:
     char* expressionPointer; // points to the expression
     char token[256]; // holds current token
     char tokenIdentifier; // holds token's type
