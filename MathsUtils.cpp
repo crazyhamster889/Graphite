@@ -37,7 +37,7 @@ Utils::mat4x4 Utils::DefineProjectionMatrix(float ScreenHeight, float ScreenWidt
 	float nearPlane = 10.0f;
 	float farPlane = 100.0f;
 	float fov = 40.0f;
-	float aspectRatio = (float)ScreenHeight / (float)ScreenWidth;
+	float aspectRatio = ScreenHeight / ScreenWidth;
 	// perform trignometric calulations to calulate the field of view
 	float fovRad = 1.0f / tanf(fov * 0.5f / 180 * 3.14159f);
 
