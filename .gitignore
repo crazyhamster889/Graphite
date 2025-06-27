@@ -391,5 +391,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-/SFML-2.6.1
-/TGUI-1.5
+
